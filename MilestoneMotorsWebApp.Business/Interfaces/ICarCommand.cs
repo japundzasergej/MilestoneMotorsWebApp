@@ -20,5 +20,6 @@ namespace MilestoneMotorsWebApp.Business.Interfaces
         Task<EditCarViewModel?> GetEditCar(int? id);
         Task<bool?> PostEditCar(int? id, EditCarViewModel carVM);
         Task<bool?> DeleteCar(int? id);
+        void SendMessage(Func<object> contact);
     }
 }

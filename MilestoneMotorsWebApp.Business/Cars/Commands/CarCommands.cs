@@ -250,5 +250,10 @@ namespace MilestoneMotorsWebApp.Business.Cars.Commands
             }
             return null;
         }
+
+        public void SendMessage(Func<object> contact)
+        {
+            contact();
+        }
     }
 }

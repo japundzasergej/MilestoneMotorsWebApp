@@ -13,11 +13,6 @@ namespace MilestoneMotorsWeb.Controllers
     {
         private readonly ICarCommand _carCommand = carCommand;
 
-        private void MessageSent()
-        {
-            TempData["Success"] = "Message sent!";
-        }
-
         public async Task<IActionResult> Index(
             string search,
             string orderBy,
@@ -121,7 +116,8 @@ namespace MilestoneMotorsWeb.Controllers
 
         public IActionResult SendMessage()
         {
-            MessageSent();
+            object contact() => TempData["Success"] = "Message sent!";
+            _carCommand.SendMessage(contact);
             return Ok();
         }
 
