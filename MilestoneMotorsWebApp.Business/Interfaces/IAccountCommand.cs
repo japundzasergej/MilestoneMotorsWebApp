@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-using MilestoneMotorsWebApp.Business.ViewModels;
-using MilestoneMotorsWebApp.Domain.Entities;
+﻿using MilestoneMotorsWebApp.Business.ViewModels;
 
 namespace MilestoneMotorsWebApp.Business.Interfaces
 {

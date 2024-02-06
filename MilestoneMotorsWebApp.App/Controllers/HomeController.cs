@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MilestoneMotorsWebApp.Business.Interfaces;

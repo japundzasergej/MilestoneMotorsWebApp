@@ -1,5 +1,4 @@
-﻿using CloudinaryDotNet.Actions;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using MilestoneMotorsWebApp.Business.Cars.Queries;
 using MilestoneMotorsWebApp.Business.Interfaces;
 using MilestoneMotorsWebApp.Business.Utilities;
