@@ -1,16 +1,26 @@
 using System.Diagnostics;
+using System.Text;
+using System.Web;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MilestoneMotorsWebApp.Business.Interfaces;
-using MilestoneMotorsWebApp.Business.Utilities;
-using MilestoneMotorsWebApp.Business.ViewModels;
+using MilestoneMotorsWebApp.App.Controllers;
+using MilestoneMotorsWebApp.Common.DTO;
+using MilestoneMotorsWebApp.Common.Interfaces;
+using MilestoneMotorsWebApp.Common.Utilities;
+using MilestoneMotorsWebApp.Common.ViewModels;
 using MilestoneMotorsWebApp.Domain.Entities;
+using Newtonsoft.Json;
+using X.PagedList;
 
 namespace MilestoneMotorsWeb.Controllers
 {
-    public class HomeController(ICarCommand carCommand, ILogger<HomeController> logger) : Controller
+    public class HomeController(IMapperService mapperService, IHttpClientFactory httpClientFactory)
+        : BaseController(mapperService, httpClientFactory)
     {
-        private readonly ICarCommand _carCommand = carCommand;
+        public override UriBuilder CloneApiUrl()
+        {
+            return base.CloneApiUrl().ExtendPath("cars");
+        }
 
         public async Task<IActionResult> Index(
             string search,
@@ -28,32 +38,67 @@ namespace MilestoneMotorsWeb.Controllers
             ViewBag.BrandFilter = brand;
             ViewBag.Page = page;
 
-            var pagedList = await _carCommand.GetCars(
-                search,
-                orderBy,
-                fuelType,
-                condition,
-                brand,
-                page
-            );
-            return View(pagedList);
+            var builder = CloneApiUrl();
+            var query = HttpUtility.ParseQueryString(builder.Query);
+            query["search"] = search;
+            query["orderBy"] = orderBy;
+            query["fuelType"] = fuelType;
+            query["condition"] = condition;
+            query["brand"] = brand;
+            builder.Query = query.ToString();
+            var apiUrl = builder.ToString();
+
+            using var client = _httpClientFactory.CreateClient();
+
+            var response = await client.GetAsync(apiUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var searchedList = JsonConvert.DeserializeObject<List<Car>>(responseBody);
+                int pageSize = 6;
+                int pageNumber = page ?? 1;
+                var pagedList = searchedList.ToPagedList(pageNumber, pageSize);
+                return View(pagedList);
+            }
+            else
+            {
+                return NotFound();
+            }
         }
 
         public async Task<IActionResult> Detail(int? id)
         {
-            var carDetail = await _carCommand.GetCarById(id);
-            if (carDetail == null)
+            var apiUrl = CloneApiUrl().ExtendPath($"/{id}").ToString();
+
+            using var client = _httpClientFactory.CreateClient();
+            var response = await client.GetAsync(apiUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var carDetail = JsonConvert.DeserializeObject<Car>(responseBody);
+
+                if (carDetail == null)
+                {
+                    return NotFound();
+                }
+
+                return View(carDetail);
+            }
+            else
             {
                 return NotFound();
             }
-            return View(carDetail);
         }
 
         [Authorize]
         public IActionResult Create()
         {
             var currentUserId = HttpContext.User.GetUserId();
-            var carVM = _carCommand.GetCreateCar(currentUserId);
+            var carVM = _mapperService.Map<Car, CreateCarViewModel>(
+                new Car { UserId = currentUserId }
+            );
             return View(carVM);
         }
 
@@ -63,11 +108,39 @@ namespace MilestoneMotorsWeb.Controllers
         {
             if (ModelState.IsValid)
             {
-                object onImageServiceDown() =>
-                    TempData["Error"] = "Image service is currently down.";
-                await _carCommand.PostCreateCar(carVM, onImageServiceDown);
-                TempData["Success"] = "Listing created successfully!";
-                return RedirectToAction("Index");
+                var carDto = _mapperService.Map<CreateCarViewModel, CreateCarDto>(carVM);
+
+                string apiUrl = CloneApiUrl().ExtendPath("/create").ToString();
+                using var client = _httpClientFactory.CreateClient();
+
+                var jsonCarDto = new StringContent(
+                    JsonConvert.SerializeObject(carDto),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                var response = await client.PostAsync(apiUrl, jsonCarDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    var imageServiceDto = JsonConvert.DeserializeObject<ImageServiceDto>(
+                        responseBody
+                    );
+
+                    if (imageServiceDto.ImageServiceDown)
+                    {
+                        TempData["Error"] = "Image service is currently down.";
+                    }
+
+                    TempData["Success"] = "Listing created successfully!";
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    TempData["Error"] = "Something went wrong.";
+                    return View(carVM);
+                }
             }
             return View(carVM);
         }
@@ -75,48 +148,71 @@ namespace MilestoneMotorsWeb.Controllers
         [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
-            var carVM = await _carCommand.GetEditCar(id);
-            if (carVM == null)
-            {
-                return NotFound();
-            }
-            return View(carVM);
-        }
+            var apiUrl = CloneApiUrl().ExtendPath($"/edit/{id}").ToString();
 
-        [Authorize]
-        [HttpPost]
-        public async Task<IActionResult> Edit(int? id, EditCarViewModel carViewModel)
-        {
-            if (ModelState.IsValid)
+            using var client = _httpClientFactory.CreateClient();
+
+            var response = await client.GetAsync(apiUrl);
+
+            if (response.IsSuccessStatusCode)
             {
-                var car = await _carCommand.PostEditCar(id, carViewModel);
-                if (car == null)
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var carDto = JsonConvert.DeserializeObject<EditCarDto>(responseBody);
+                if (carDto == null)
                 {
                     return NotFound();
                 }
-                TempData["Success"] = "Listing updated successfully!";
-                return RedirectToAction("Index");
+                var carVM = _mapperService.Map<EditCarDto, EditCarViewModel>(carDto);
+                return View(carVM);
             }
-            return View(carViewModel);
+            else
+            {
+                TempData["Error"] = "Something went wrong.";
+                return View("Error");
+            }
         }
 
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Edit(int? id, EditCarViewModel editCarVM)
         {
-            var deletedCar = await _carCommand.DeleteCar(id);
-            if (deletedCar == null)
+            if (ModelState.IsValid)
             {
-                return NotFound();
+                if (id == null || id == 0)
+                {
+                    return NotFound();
+                }
+
+                var carDto = _mapperService.Map<EditCarViewModel, EditCarDto>(editCarVM);
+                carDto.Id = (int)id;
+
+                var apiUrl = CloneApiUrl().ExtendPath("/edit").ToString();
+
+                using var client = _httpClientFactory.CreateClient();
+                var jsonCarDto = new StringContent(
+                    JsonConvert.SerializeObject(carDto),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+                var response = await client.PostAsync(apiUrl, jsonCarDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["Success"] = "Listing updated successfully!";
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    TempData["Error"] = "Something went wrong";
+                    return View(editCarVM);
+                }
             }
-            TempData["Success"] = "Listing deleted successfully!";
-            return RedirectToAction("Index");
+            return View(editCarVM);
         }
 
         public IActionResult SendMessage()
         {
-            object contact() => TempData["Success"] = "Message sent!";
-            _carCommand.SendMessage(contact);
+            TempData["Success"] = "Message sent successfully!";
             return Ok();
         }
 

@@ -8,9 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddBusinessInjection(builder.Configuration);
-builder.Services.AddInfrastructureInjection(builder.Configuration);
+builder.Services.AddAppInjection(builder.Configuration);
 builder.Services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 builder.Services.AddSession();
 builder
@@ -23,16 +23,10 @@ builder
 
 var app = builder.Build();
 
-if (args.Length == 1 && args[0].Equals("seeddata", StringComparison.CurrentCultureIgnoreCase))
-{
-    //Seed.SeedData(app);
-    //await Seed.SeedUsersAndRolesAsync(app);
-}
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error}");
+    app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }

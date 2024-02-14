@@ -13,6 +13,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MilestoneMotorsWebApp.Busin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MilestoneMotorsWebApp.Infrastructure", "MilestoneMotorsWebApp.Infrastructure\MilestoneMotorsWebApp.Infrastructure.csproj", "{2CDBF586-3663-498B-9BDD-9CB301E4F27E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MilestoneMotorsWebApp.WebApi", "MilestoneMotorsWeb.WebApi\MilestoneMotorsWebApp.WebApi.csproj", "{EDC7D0DC-AB6C-47DB-9B55-5C8945D16E72}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MilestoneMotorsWebApp.Common", "MilestoneMotorsWebApp.Common\MilestoneMotorsWebApp.Common.csproj", "{307AB471-0CA0-4D56-9ACE-CA94F9B60359}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +39,14 @@ Global
 		{2CDBF586-3663-498B-9BDD-9CB301E4F27E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2CDBF586-3663-498B-9BDD-9CB301E4F27E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2CDBF586-3663-498B-9BDD-9CB301E4F27E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDC7D0DC-AB6C-47DB-9B55-5C8945D16E72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDC7D0DC-AB6C-47DB-9B55-5C8945D16E72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDC7D0DC-AB6C-47DB-9B55-5C8945D16E72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDC7D0DC-AB6C-47DB-9B55-5C8945D16E72}.Release|Any CPU.Build.0 = Release|Any CPU
+		{307AB471-0CA0-4D56-9ACE-CA94F9B60359}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{307AB471-0CA0-4D56-9ACE-CA94F9B60359}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{307AB471-0CA0-4D56-9ACE-CA94F9B60359}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{307AB471-0CA0-4D56-9ACE-CA94F9B60359}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -44,6 +56,8 @@ Global
 		{6262DD3B-1400-46A3-9F46-53FBC670E893} = {A11BD0C0-7A6C-490C-BB59-C4DA2944E103}
 		{C4586DFA-EBD5-47C4-8EA6-70FEB19578D9} = {A11BD0C0-7A6C-490C-BB59-C4DA2944E103}
 		{2CDBF586-3663-498B-9BDD-9CB301E4F27E} = {A11BD0C0-7A6C-490C-BB59-C4DA2944E103}
+		{EDC7D0DC-AB6C-47DB-9B55-5C8945D16E72} = {A11BD0C0-7A6C-490C-BB59-C4DA2944E103}
+		{307AB471-0CA0-4D56-9ACE-CA94F9B60359} = {A11BD0C0-7A6C-490C-BB59-C4DA2944E103}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FC7A8232-FCC8-4A27-872F-3C5F31BC2FF9}

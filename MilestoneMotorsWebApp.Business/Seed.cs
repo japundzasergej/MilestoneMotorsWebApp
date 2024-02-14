@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
-using MilestoneMotorsWebApp.Business.Utilities;
+using MilestoneMotorsWebApp.Common.Utilities;
 using MilestoneMotorsWebApp.Domain.Constants;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Domain.Enums;

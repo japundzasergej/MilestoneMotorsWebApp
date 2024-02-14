@@ -8,11 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="CloudinaryDotNet" Version="1.25.0" />
-    <PackageReference Include="X.PagedList" Version="8.4.7" />
-    <PackageReference Include="X.PagedList.Mvc.Core" Version="8.4.7" />
+    <PackageReference Include="MediatR" Version="12.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.DataAnnotations" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MilestoneMotorsWebApp.Common\MilestoneMotorsWebApp.Common.csproj" />
     <ProjectReference Include="..\MilestoneMotorsWebApp.Domain\MilestoneMotorsWebApp.Domain.csproj" />
     <ProjectReference Include="..\MilestoneMotorsWebApp.Infrastructure\MilestoneMotorsWebApp.Infrastructure.csproj" />
   </ItemGroup>

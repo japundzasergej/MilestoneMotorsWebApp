@@ -1,4 +1,4 @@
-﻿@using MilestoneMotorsWebApp.Business.Utilities
+﻿@using MilestoneMotorsWebApp.Common.Utilities
 @model IEnumerable<Car>
 
 @{
@@ -145,7 +145,7 @@
 <script>
     const deleteCar = (carId) => {
         $.ajax({
-            url: '/Home/Delete/' + carId,
+            url: 'http://localhost:7275/api/cars/delete/' + carId,
             type: 'POST',
             success: () => location.reload(),
             error: () => window.location.href = '/Home/Index'

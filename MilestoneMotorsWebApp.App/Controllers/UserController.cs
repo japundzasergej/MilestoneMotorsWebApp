@@ -1,39 +1,77 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using MilestoneMotorsWebApp.Business.Interfaces;
-using MilestoneMotorsWebApp.Business.Utilities;
-using MilestoneMotorsWebApp.Business.ViewModels;
+using MilestoneMotorsWebApp.App.Controllers;
+using MilestoneMotorsWebApp.Common.DTO;
+using MilestoneMotorsWebApp.Common.Interfaces;
+using MilestoneMotorsWebApp.Common.Utilities;
+using MilestoneMotorsWebApp.Common.ViewModels;
 using MilestoneMotorsWebApp.Domain.Entities;
+using Newtonsoft.Json;
 
 namespace MilestoneMotorsWeb.Controllers
 {
-    public class UserController(IUserCommand userCommand, UserManager<User> userManager)
-        : Controller
+    public class UserController(IMapperService mapperService, IHttpClientFactory httpClientFactory)
+        : BaseController(mapperService, httpClientFactory)
     {
-        private readonly IUserCommand _userCommand = userCommand;
-        private readonly UserManager<User> _userManager = userManager;
+        public override UriBuilder CloneApiUrl()
+        {
+            return base.CloneApiUrl().ExtendPath("user");
+        }
 
         [Authorize]
         public async Task<IActionResult> Detail(string? id)
         {
-            var userPage = await _userCommand.GetUserDetail(id);
-            if (userPage == null)
+            var apiUrl = CloneApiUrl().ExtendPath($"/{id}").ToString();
+            using var client = _httpClientFactory.CreateClient();
+            var result = await client.GetAsync(apiUrl);
+
+            if (result.IsSuccessStatusCode)
+            {
+                string responseBody = await result.Content.ReadAsStringAsync();
+                var userPage = JsonConvert.DeserializeObject<User>(responseBody);
+
+                if (userPage == null)
+                {
+                    return NotFound();
+                }
+
+                return View(userPage);
+            }
+            else
             {
                 return NotFound();
             }
-            return View(userPage);
         }
 
         [Authorize]
         public async Task<IActionResult> EditPage(string? id)
         {
-            var userVM = await _userCommand.GetEditUser(id);
-            if (userVM == null)
+            var apiUrl = CloneApiUrl().ExtendPath($"/edit/{id}").ToString();
+
+            using var client = _httpClientFactory.CreateClient();
+            var response = await client.GetAsync(apiUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+                var userDto = JsonConvert.DeserializeObject<EditUserDto>(responseBody);
+
+                if (userDto == null)
+                {
+                    return NotFound();
+                }
+
+                var userVM = _mapperService.Map<EditUserDto, EditUserViewModel>(userDto);
+
+                return View(userVM);
+            }
+            else
             {
                 return NotFound();
             }
-            return View(userVM);
         }
 
         [HttpPost]
@@ -46,34 +84,67 @@ namespace MilestoneMotorsWeb.Controllers
                 return View(editVM);
             }
 
-            object onImageServiceDown() => TempData["Error"] = "Image upload service is down.";
-            var user = await _userManager.GetUserAsync(User);
+            var apiUrl = CloneApiUrl().ExtendPath("/edit").ToString();
+            using var client = _httpClientFactory.CreateClient();
 
-            if (user == null)
+            var userId = HttpContext.User.GetUserId();
+
+            var editDto = _mapperService.Map<EditUserViewModel, EditUserDto>(editVM);
+            editDto.Id = userId;
+
+            var jsonEditDto = new StringContent(
+                JsonConvert.SerializeObject(editDto),
+                Encoding.UTF8,
+                "application/json"
+            );
+            var response = await client.PostAsync(apiUrl, jsonEditDto);
+
+            if (response.IsSuccessStatusCode)
             {
-                return NotFound();
-            }
-
-            var newUser = await _userCommand.PostEditUser(editVM, user, onImageServiceDown);
-
-            if (newUser)
-            {
-                TempData["Success"] = "Successfully updated profile.";
-                return RedirectToAction("Detail", "User", new { user.Id });
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var editUserFeedback = JsonConvert.DeserializeObject<EditUserFeedbackDto>(
+                    responseBody
+                );
+                if (editUserFeedback.IsImageServiceDown)
+                {
+                    TempData["Error"] = "Image upload service is down.";
+                }
+                if (!editUserFeedback.HasFailed)
+                {
+                    TempData["Success"] = "Successfully updated profile.";
+                    return RedirectToAction("Detail", "User", new { userId });
+                }
+                else
+                {
+                    TempData["Error"] = "Something went wrong.";
+                    return RedirectToAction("Detail", "User", new { userId });
+                }
             }
             else
             {
-                TempData["Error"] = "Something went wrong.";
-                return RedirectToAction("Detail", "User", new { user.Id });
+                TempData["Error"] = "Something went wrong";
+                return RedirectToAction("Detail", "User", new { userId });
             }
         }
 
         [Authorize]
         public async Task<IActionResult> MyListings()
         {
-            var currentUser = HttpContext.User.GetUserId();
-            var userCars = await _userCommand.GetUserCars(currentUser);
-            return View(userCars);
+            var id = HttpContext.User.GetUserId();
+            var apiUrl = CloneApiUrl().ExtendPath($"/userCars/{id}").ToString();
+            using var client = _httpClientFactory.CreateClient();
+
+            var response = await client.GetAsync(apiUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var jsonUserCars = JsonConvert.DeserializeObject<List<Car>>(responseBody);
+                return View(jsonUserCars);
+            }
+            else
+            {
+                return NotFound();
+            }
         }
 
         [HttpPost]
@@ -81,13 +152,18 @@ namespace MilestoneMotorsWeb.Controllers
         [Route("User/DeleteUser")]
         public async Task<IActionResult> DeleteUser()
         {
-            var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser == null)
+            var id = HttpContext.User.GetUserId();
+            var apiUrl = CloneApiUrl().ExtendPath($"/delete/{id}").ToString();
+            using var client = _httpClientFactory.CreateClient();
+
+            var response = await client.PostAsync(apiUrl, new StringContent(string.Empty));
+
+            if (id == null)
             {
                 return NotFound();
             }
-            var result = await _userCommand.DeleteUserProfile(currentUser);
-            if (result)
+
+            if (response.IsSuccessStatusCode)
             {
                 TempData["Success"] = "Account successfully deleted.";
                 return RedirectToAction("Index", "Home");
@@ -96,7 +172,7 @@ namespace MilestoneMotorsWeb.Controllers
             {
                 TempData["Error"] =
                     "Something went wrong while deleting your account, please try again later.";
-                return RedirectToAction("Detail", "User", new { currentUser.Id });
+                return RedirectToAction("Detail", "User", new { id });
             }
         }
     }
