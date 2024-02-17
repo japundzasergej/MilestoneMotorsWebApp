@@ -121,13 +121,13 @@ namespace MilestoneMotorsWeb.Controllers
                 }
                 else
                 {
-                    TempData["Error"] = await response.Content.ReadAsStringAsync();
+                    TempData["Error"] = "Something went wrong, please try again.";
                     return RedirectToAction("Detail", "User", new { editDto.Id });
                 }
             }
             else
             {
-                TempData["Error"] = await response.Content.ReadAsStringAsync();
+                TempData["Error"] = "Something went wrong, please try again.";
                 return RedirectToAction("Detail", "User", new { editDto.Id });
             }
         }

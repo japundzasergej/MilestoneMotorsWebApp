@@ -65,6 +65,7 @@ namespace MilestoneMotorsWeb.Controllers
                         foreach (var error in registerFeedbackDto.ErrorList)
                         {
                             TempData["Error"] = error.Description;
+                            return View(registerVM);
                         }
                     }
 
@@ -73,7 +74,7 @@ namespace MilestoneMotorsWeb.Controllers
                 }
                 else
                 {
-                    TempData["Error"] = await response.Content.ReadAsStringAsync();
+                    TempData["Error"] = "Something went wrong, please try again later.";
                     return View(registerVM);
                 }
             }

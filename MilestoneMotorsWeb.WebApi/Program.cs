@@ -4,6 +4,7 @@ using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+var url = builder.Configuration["JwtSettings:Audience"];
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -23,7 +24,7 @@ builder
             builder =>
             {
                 builder
-                    .WithOrigins("https://localhost:44369/")
+                    .WithOrigins(url)
                     .AllowCredentials()
                     .AllowAnyMethod()
                     .AllowAnyHeader()
