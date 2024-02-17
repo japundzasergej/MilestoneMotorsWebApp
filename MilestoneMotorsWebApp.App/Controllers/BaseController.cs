@@ -24,11 +24,6 @@ namespace MilestoneMotorsWebApp.App.Controllers
         {
             var client = _httpClientFactory.CreateClient("CustomHttpClient");
 
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-                "Bearer",
-                HttpContext.Session.GetString("JwtToken")
-            );
-
             return client;
         }
 
