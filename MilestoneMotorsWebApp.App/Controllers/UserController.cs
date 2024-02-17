@@ -1,7 +1,6 @@
 ﻿using System.Text;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Controllers;
 using MilestoneMotorsWebApp.Common.DTO;
 using MilestoneMotorsWebApp.Common.Interfaces;
@@ -12,19 +11,22 @@ using Newtonsoft.Json;
 
 namespace MilestoneMotorsWeb.Controllers
 {
-    public class UserController(IMapperService mapperService, IHttpClientFactory httpClientFactory)
-        : BaseController(mapperService, httpClientFactory)
+    public class UserController(
+        IMapperService mapperService,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration
+    ) : BaseController(mapperService, httpClientFactory, configuration)
     {
         public override UriBuilder CloneApiUrl()
         {
             return base.CloneApiUrl().ExtendPath("user");
         }
 
-        [Authorize]
+        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> Detail(string? id)
         {
             var apiUrl = CloneApiUrl().ExtendPath($"/{id}").ToString();
-            using var client = _httpClientFactory.CreateClient();
+            using var client = GetClientFactory();
             var result = await client.GetAsync(apiUrl);
 
             if (result.IsSuccessStatusCode)
@@ -45,12 +47,12 @@ namespace MilestoneMotorsWeb.Controllers
             }
         }
 
-        [Authorize]
+        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> EditPage(string? id)
         {
             var apiUrl = CloneApiUrl().ExtendPath($"/edit/{id}").ToString();
 
-            using var client = _httpClientFactory.CreateClient();
+            using var client = GetClientFactory();
             var response = await client.GetAsync(apiUrl);
 
             if (response.IsSuccessStatusCode)
@@ -74,8 +76,8 @@ namespace MilestoneMotorsWeb.Controllers
             }
         }
 
+        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
-        [Authorize]
         public async Task<IActionResult> EditPage(EditUserViewModel editVM)
         {
             if (!ModelState.IsValid)
@@ -85,15 +87,18 @@ namespace MilestoneMotorsWeb.Controllers
             }
 
             var apiUrl = CloneApiUrl().ExtendPath("/edit").ToString();
-            using var client = _httpClientFactory.CreateClient();
+            using var client = GetClientFactory();
 
-            var userId = HttpContext.User.GetUserId();
+            var userId = GetUserId();
 
             var editDto = _mapperService.Map<EditUserViewModel, EditUserDto>(editVM);
             editDto.Id = userId;
+            editDto.ImageContentType = editVM?.ProfilePictureImageUrl?.ContentType ?? "";
+
+            var payload = new { EditUserDto = editDto };
 
             var jsonEditDto = new StringContent(
-                JsonConvert.SerializeObject(editDto),
+                JsonConvert.SerializeObject(payload),
                 Encoding.UTF8,
                 "application/json"
             );
@@ -112,27 +117,27 @@ namespace MilestoneMotorsWeb.Controllers
                 if (!editUserFeedback.HasFailed)
                 {
                     TempData["Success"] = "Successfully updated profile.";
-                    return RedirectToAction("Detail", "User", new { userId });
+                    return RedirectToAction("Detail", "User", new { editDto.Id });
                 }
                 else
                 {
-                    TempData["Error"] = "Something went wrong.";
-                    return RedirectToAction("Detail", "User", new { userId });
+                    TempData["Error"] = "Something went wrong, please try again.";
+                    return RedirectToAction("Detail", "User", new { editDto.Id });
                 }
             }
             else
             {
-                TempData["Error"] = "Something went wrong";
-                return RedirectToAction("Detail", "User", new { userId });
+                TempData["Error"] = "Something went wrong, please try again.";
+                return RedirectToAction("Detail", "User", new { editDto.Id });
             }
         }
 
-        [Authorize]
+        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> MyListings()
         {
-            var id = HttpContext.User.GetUserId();
-            var apiUrl = CloneApiUrl().ExtendPath($"/userCars/{id}").ToString();
-            using var client = _httpClientFactory.CreateClient();
+            var userId = GetUserId();
+            var apiUrl = CloneApiUrl().ExtendPath($"/userCars/{userId}").ToString();
+            using var client = GetClientFactory();
 
             var response = await client.GetAsync(apiUrl);
             if (response.IsSuccessStatusCode)
@@ -147,24 +152,25 @@ namespace MilestoneMotorsWeb.Controllers
             }
         }
 
+        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
-        [Authorize]
         [Route("User/DeleteUser")]
         public async Task<IActionResult> DeleteUser()
         {
-            var id = HttpContext.User.GetUserId();
-            var apiUrl = CloneApiUrl().ExtendPath($"/delete/{id}").ToString();
-            using var client = _httpClientFactory.CreateClient();
+            var userId = GetUserId();
+            var apiUrl = CloneApiUrl().ExtendPath($"/delete/{userId}").ToString();
+            using var client = GetClientFactory();
 
             var response = await client.PostAsync(apiUrl, new StringContent(string.Empty));
 
-            if (id == null)
+            if (userId == null)
             {
                 return NotFound();
             }
 
             if (response.IsSuccessStatusCode)
             {
+                HttpContext.Session.Remove("JwtToken");
                 TempData["Success"] = "Account successfully deleted.";
                 return RedirectToAction("Index", "Home");
             }
@@ -172,7 +178,7 @@ namespace MilestoneMotorsWeb.Controllers
             {
                 TempData["Error"] =
                     "Something went wrong while deleting your account, please try again later.";
-                return RedirectToAction("Detail", "User", new { id });
+                return RedirectToAction("Detail", "User", new { userId });
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using MilestoneMotorsWebApp.Common.DTO;
 using MilestoneMotorsWebApp.Common.Interfaces;
 using MilestoneMotorsWebApp.Common.Utilities;
@@ -44,6 +45,30 @@ namespace MilestoneMotorsWebApp.Common.Services
                     .ForMember(
                         dest => dest.AdNumber,
                         opt => opt.MapFrom(src => $"{src.UserId}-{src.Model}")
+                    )
+                    .ForMember(
+                        dest => dest.HeadlinerImageUrl,
+                        opt => opt.MapFrom(src => ConvertFormFileToByteArray(src.HeadlinerImageUrl))
+                    )
+                    .ForMember(
+                        dest => dest.PhotoOne,
+                        opt => opt.MapFrom(src => ConvertFormFileToByteArray(src.PhotoOne))
+                    )
+                    .ForMember(
+                        dest => dest.PhotoTwo,
+                        opt => opt.MapFrom(src => ConvertFormFileToByteArray(src.PhotoTwo))
+                    )
+                    .ForMember(
+                        dest => dest.PhotoThree,
+                        opt => opt.MapFrom(src => ConvertFormFileToByteArray(src.PhotoThree))
+                    )
+                    .ForMember(
+                        dest => dest.PhotoFour,
+                        opt => opt.MapFrom(src => ConvertFormFileToByteArray(src.PhotoFour))
+                    )
+                    .ForMember(
+                        dest => dest.PhotoFive,
+                        opt => opt.MapFrom(src => ConvertFormFileToByteArray(src.PhotoFive))
                     );
 
                 cfg.CreateMap<CreateCarDto, Car>();
@@ -87,7 +112,14 @@ namespace MilestoneMotorsWebApp.Common.Services
                 cfg.CreateMap<User, EditUserDto>()
                     .ForMember(dest => dest.ProfilePictureImageUrl, opt => opt.Ignore());
                 cfg.CreateMap<EditUserDto, EditUserViewModel>();
-                cfg.CreateMap<EditUserViewModel, EditUserDto>();
+                cfg.CreateMap<EditUserViewModel, EditUserDto>()
+                    .ForMember(
+                        dest => dest.ProfilePictureImageUrl,
+                        opt =>
+                            opt.MapFrom(
+                                src => ConvertFormFileToByteArray(src.ProfilePictureImageUrl)
+                            )
+                    );
             });
             _mapper = configuration.CreateMapper();
         }
@@ -95,6 +127,17 @@ namespace MilestoneMotorsWebApp.Common.Services
         public TDestination Map<TSource, TDestination>(TSource source)
         {
             return _mapper.Map<TSource, TDestination>(source);
+        }
+
+        private static byte[]? ConvertFormFileToByteArray(IFormFile? file)
+        {
+            if (file != null)
+            {
+                using MemoryStream memoryStream = new();
+                file.CopyTo(memoryStream);
+                return memoryStream.ToArray();
+            }
+            return null;
         }
     }
 }

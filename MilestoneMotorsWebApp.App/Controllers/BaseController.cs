@@ -1,20 +1,42 @@
-﻿using System.Net;
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc;
 using MilestoneMotorsWebApp.Common.Interfaces;
 
 namespace MilestoneMotorsWebApp.App.Controllers
 {
-    public class BaseController(IMapperService mapperService, IHttpClientFactory httpClientFactory)
-        : Controller
+    public class BaseController(
+        IMapperService mapperService,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration
+    ) : Controller
     {
         protected IMapperService _mapperService = mapperService;
-        protected IHttpClientFactory _httpClientFactory = httpClientFactory;
-        protected readonly UriBuilder _urlBuilder = new($"https://localhost:7275/api/");
+        private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+        private readonly IConfiguration _configuration = configuration;
 
         public virtual UriBuilder CloneApiUrl()
         {
-            return new(_urlBuilder.Uri);
+            var apiUrl = _configuration["ApiUrl"];
+            return new UriBuilder(apiUrl);
+        }
+
+        protected HttpClient GetClientFactory()
+        {
+            var client = _httpClientFactory.CreateClient("CustomHttpClient");
+
+            return client;
+        }
+
+        protected string GetUserId()
+        {
+            var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jwtToken = HttpContext.Session.GetString("JwtToken");
+
+            var jsonToken =
+                tokenHandler.ReadToken(jwtToken)
+                as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
+
+            return jsonToken?.Claims.FirstOrDefault(claim => claim.Type == "nameid")?.Value ?? "";
         }
     }
 }

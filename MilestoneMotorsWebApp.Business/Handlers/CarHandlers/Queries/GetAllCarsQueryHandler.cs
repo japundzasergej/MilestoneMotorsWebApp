@@ -1,5 +1,4 @@
-﻿using MediatR;
-using MilestoneMotorsWebApp.Business.Cars.Queries;
+﻿using MilestoneMotorsWebApp.Business.Cars.Queries;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Domain.Enums;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;

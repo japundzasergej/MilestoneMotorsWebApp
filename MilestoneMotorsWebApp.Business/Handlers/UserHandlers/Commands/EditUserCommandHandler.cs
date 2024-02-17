@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using MilestoneMotorsWebApp.Business.Interfaces;
-using MilestoneMotorsWebApp.Business.Services;
 using MilestoneMotorsWebApp.Business.Users.Commands;
 using MilestoneMotorsWebApp.Common.DTO;
 using MilestoneMotorsWebApp.Common.Interfaces;
@@ -29,6 +24,34 @@ namespace MilestoneMotorsWebApp.Business.Handlers.UserHandlers.Commands
         private readonly IPhotoService _photoService = photoService;
         private readonly UserManager<User> _userManager = userManager;
 
+        private async Task<string?> CloudinaryUpload(byte[]? byteArray, string contentType)
+        {
+            if (byteArray != null || byteArray.Length > 0)
+            {
+                using var memoryStream = new MemoryStream(byteArray);
+                await memoryStream.WriteAsync(byteArray);
+
+                var convertedFile = new FormFile(
+                    memoryStream,
+                    0,
+                    memoryStream.Length,
+                    "file",
+                    "profilePicture"
+                )
+                {
+                    Headers = new HeaderDictionary(),
+                    ContentType = contentType
+                };
+
+                var result = await _photoService.AddPhotoAsync(convertedFile);
+                return result?.Url.ToString() ?? "";
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public override async Task<EditUserFeedbackDto> Handle(
             EditUserCommand request,
             CancellationToken cancellationToken
@@ -36,11 +59,16 @@ namespace MilestoneMotorsWebApp.Business.Handlers.UserHandlers.Commands
         {
             var editDto = request.EditUserDto;
             var id = editDto.Id;
-            var user = await _repository.GetByIdNoTrackAsync(id);
+            var contentType = editDto.ImageContentType ?? "";
+            var user = await _repository.GetByIdAsync(id);
             var editFeedbackDto = new EditUserFeedbackDto();
-            if (editDto.ProfilePictureImageUrl != null)
+
+            if (editDto.ProfilePictureImageUrl != null && editDto.ProfilePictureImageUrl.Length > 0)
             {
-                var photoResult = await _photoService.AddPhotoAsync(editDto.ProfilePictureImageUrl);
+                var photoResult = await CloudinaryUpload(
+                    editDto.ProfilePictureImageUrl,
+                    contentType
+                );
 
                 if (photoResult == null)
                 {
@@ -51,8 +79,8 @@ namespace MilestoneMotorsWebApp.Business.Handlers.UserHandlers.Commands
                 {
                     _ = _photoService.DeletePhotoAsync(user.ProfilePictureImageUrl);
                 }
-                user.ProfilePictureImageUrl =
-                    photoResult?.Url.ToString() ?? user.ProfilePictureImageUrl;
+
+                user.ProfilePictureImageUrl = photoResult ?? user.ProfilePictureImageUrl;
                 user.City = editDto?.City?.FirstCharToUpper().Trim() ?? string.Empty;
                 user.State = editDto?.State?.FirstCharToUpper().Trim() ?? string.Empty;
                 user.Country = editDto?.Country?.FirstCharToUpper().Trim() ?? string.Empty;

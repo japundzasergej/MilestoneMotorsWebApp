@@ -132,14 +132,14 @@
                 <button type="submit" class="btn btn-primary btn-rounded" style="font-size: 18px; width: 30%;">Submit</button>
             </div>
         </div>
+        </div>
 </form>
 
 <script>
     const isNumberKey = (e) => {
         const charCode = (e.which) ? e.which : e.keyCode;
-        if (charCode > 31 && (charCode < 48 || charCode > 57))
-            return false;
-        return true;
+        return !(charCode > 31 && (charCode < 48 || charCode > 57));
+        
     }
 </script>
 

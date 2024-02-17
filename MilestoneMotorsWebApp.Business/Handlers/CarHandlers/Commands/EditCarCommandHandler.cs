@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MilestoneMotorsWebApp.Business.Cars.Commands;
-using MilestoneMotorsWebApp.Business.Interfaces;
+﻿using MilestoneMotorsWebApp.Business.Cars.Commands;
 using MilestoneMotorsWebApp.Common.DTO;
 using MilestoneMotorsWebApp.Common.Interfaces;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
-using MilestoneMotorsWebApp.Infrastructure.Repositories;
 
 namespace MilestoneMotorsWebApp.Business.Handlers.CarHandlers.Commands
 {
@@ -21,7 +14,7 @@ namespace MilestoneMotorsWebApp.Business.Handlers.CarHandlers.Commands
             CancellationToken cancellationToken
         )
         {
-            var carDto = request.CarDto;
+            var carDto = request.EditCarDto;
             var id = carDto.Id;
             if (id == 0)
             {
