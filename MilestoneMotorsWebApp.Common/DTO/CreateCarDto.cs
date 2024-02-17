@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using MilestoneMotorsWebApp.Domain.Enums;
+﻿using MilestoneMotorsWebApp.Domain.Enums;
 
 namespace MilestoneMotorsWebApp.Common.DTO
 {
@@ -31,18 +30,22 @@ namespace MilestoneMotorsWebApp.Common.DTO
 
         public YesOrNo Exchange { get; set; }
 
-        public IFormFile? HeadlinerImageUrl { get; set; }
+        public byte[]? HeadlinerImageUrl { get; set; }
 
-        public IFormFile? PhotoOne { get; set; }
+        public byte[]? PhotoOne { get; set; }
 
-        public IFormFile? PhotoTwo { get; set; }
+        public byte[]? PhotoTwo { get; set; }
 
-        public IFormFile? PhotoThree { get; set; }
+        public byte[]? PhotoThree { get; set; }
 
-        public IFormFile? PhotoFour { get; set; }
+        public byte[]? PhotoFour { get; set; }
 
-        public IFormFile? PhotoFive { get; set; }
+        public byte[]? PhotoFive { get; set; }
+
         public string? UserId { get; set; }
+
         public string? AdNumber { get; set; }
+
+        public List<string> ImageContentTypes { get; set; }
     }
 }

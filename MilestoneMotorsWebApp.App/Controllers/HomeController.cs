@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Text;
 using System.Web;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Controllers;
 using MilestoneMotorsWebApp.Common.DTO;
 using MilestoneMotorsWebApp.Common.Interfaces;
@@ -14,12 +14,28 @@ using X.PagedList;
 
 namespace MilestoneMotorsWeb.Controllers
 {
-    public class HomeController(IMapperService mapperService, IHttpClientFactory httpClientFactory)
-        : BaseController(mapperService, httpClientFactory)
+    public class HomeController(
+        IMapperService mapperService,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration
+    ) : BaseController(mapperService, httpClientFactory, configuration)
     {
         public override UriBuilder CloneApiUrl()
         {
             return base.CloneApiUrl().ExtendPath("cars");
+        }
+
+        private static List<string> GetImageContentType(List<IFormFile> imageFiles)
+        {
+            List<string> imageContentTypeList =  [ ];
+            foreach (var image in imageFiles)
+            {
+                if (image != null)
+                {
+                    imageContentTypeList.Add(image.ContentType);
+                }
+            }
+            return imageContentTypeList;
         }
 
         public async Task<IActionResult> Index(
@@ -48,7 +64,7 @@ namespace MilestoneMotorsWeb.Controllers
             builder.Query = query.ToString();
             var apiUrl = builder.ToString();
 
-            using var client = _httpClientFactory.CreateClient();
+            using var client = GetClientFactory();
 
             var response = await client.GetAsync(apiUrl);
 
@@ -71,7 +87,7 @@ namespace MilestoneMotorsWeb.Controllers
         {
             var apiUrl = CloneApiUrl().ExtendPath($"/{id}").ToString();
 
-            using var client = _httpClientFactory.CreateClient();
+            using var client = GetClientFactory();
             var response = await client.GetAsync(apiUrl);
 
             if (response.IsSuccessStatusCode)
@@ -92,29 +108,40 @@ namespace MilestoneMotorsWeb.Controllers
             }
         }
 
-        [Authorize]
+        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public IActionResult Create()
         {
-            var currentUserId = HttpContext.User.GetUserId();
-            var carVM = _mapperService.Map<Car, CreateCarViewModel>(
-                new Car { UserId = currentUserId }
-            );
+            var userId = GetUserId();
+            var carVM = _mapperService.Map<Car, CreateCarViewModel>(new Car { UserId = userId });
             return View(carVM);
         }
 
-        [Authorize]
+        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         public async Task<IActionResult> Create(CreateCarViewModel carVM)
         {
             if (ModelState.IsValid)
             {
                 var carDto = _mapperService.Map<CreateCarViewModel, CreateCarDto>(carVM);
+                List<IFormFile> files =
+                [
+                    carVM.HeadlinerImageUrl,
+                    carVM.PhotoOne,
+                    carVM.PhotoTwo,
+                    carVM.PhotoThree,
+                    carVM.PhotoFour,
+                    carVM.PhotoFive
+                ];
+                var imageContentTypes = GetImageContentType(files);
+                carDto.ImageContentTypes = imageContentTypes;
 
                 string apiUrl = CloneApiUrl().ExtendPath("/create").ToString();
-                using var client = _httpClientFactory.CreateClient();
+                using var client = GetClientFactory();
+
+                var payload = new { CreateCarDto = carDto };
 
                 var jsonCarDto = new StringContent(
-                    JsonConvert.SerializeObject(carDto),
+                    JsonConvert.SerializeObject(payload),
                     Encoding.UTF8,
                     "application/json"
                 );
@@ -133,32 +160,38 @@ namespace MilestoneMotorsWeb.Controllers
                         TempData["Error"] = "Image service is currently down.";
                     }
 
+                    if (!imageServiceDto.DbSuccessful)
+                    {
+                        TempData["Error"] = "Something went wrong, please try again.";
+                    }
+
                     TempData["Success"] = "Listing created successfully!";
                     return RedirectToAction("Index");
                 }
                 else
                 {
-                    TempData["Error"] = "Something went wrong.";
+                    TempData["Error"] = "Something went wrong";
                     return View(carVM);
                 }
             }
             return View(carVM);
         }
 
-        [Authorize]
+        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> Edit(int? id)
         {
             var apiUrl = CloneApiUrl().ExtendPath($"/edit/{id}").ToString();
 
-            using var client = _httpClientFactory.CreateClient();
+            using var client = GetClientFactory();
 
             var response = await client.GetAsync(apiUrl);
 
             if (response.IsSuccessStatusCode)
             {
                 string responseBody = await response.Content.ReadAsStringAsync();
+
                 var carDto = JsonConvert.DeserializeObject<EditCarDto>(responseBody);
-                if (carDto == null)
+                if (!carDto.IsSuccessful)
                 {
                     return NotFound();
                 }
@@ -172,7 +205,7 @@ namespace MilestoneMotorsWeb.Controllers
             }
         }
 
-        [Authorize]
+        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         public async Task<IActionResult> Edit(int? id, EditCarViewModel editCarVM)
         {
@@ -187,10 +220,11 @@ namespace MilestoneMotorsWeb.Controllers
                 carDto.Id = (int)id;
 
                 var apiUrl = CloneApiUrl().ExtendPath("/edit").ToString();
+                var payload = new { EditCarDto = carDto };
 
-                using var client = _httpClientFactory.CreateClient();
+                using var client = GetClientFactory();
                 var jsonCarDto = new StringContent(
-                    JsonConvert.SerializeObject(carDto),
+                    JsonConvert.SerializeObject(payload),
                     Encoding.UTF8,
                     "application/json"
                 );
@@ -203,13 +237,37 @@ namespace MilestoneMotorsWeb.Controllers
                 }
                 else
                 {
-                    TempData["Error"] = "Something went wrong";
+                    TempData["Error"] = await response.Content.ReadAsStringAsync();
                     return View(editCarVM);
                 }
             }
             return View(editCarVM);
         }
 
+        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
+        [HttpPost]
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null || id == 0)
+            {
+                return NotFound();
+            }
+
+            var apiUrl = CloneApiUrl().ExtendPath($"/delete/{id}").ToString();
+            using var client = GetClientFactory();
+            var response = await client.PostAsync(apiUrl, new StringContent(string.Empty));
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["Success"] = "Listing deleted successfully!";
+            }
+            else
+            {
+                TempData["Error"] = "Something went wrong";
+            }
+            return RedirectToAction("Index");
+        }
+
+        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public IActionResult SendMessage()
         {
             TempData["Success"] = "Message sent successfully!";
@@ -222,6 +280,10 @@ namespace MilestoneMotorsWeb.Controllers
             if (statuscode == 404)
             {
                 return View("NotFound");
+            }
+            else if (statuscode == 401)
+            {
+                return View("Unauthorized");
             }
             else
             {

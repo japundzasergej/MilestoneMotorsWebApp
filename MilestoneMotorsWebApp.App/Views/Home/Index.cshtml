@@ -1,13 +1,35 @@
 ﻿@using MilestoneMotorsWebApp.Common.Utilities
-@using Microsoft.AspNetCore.Identity
+@using System.Security.Claims
 @using X.PagedList
 @using X.PagedList.Mvc.Core
 @using System.Web
 @using MilestoneMotorsWebApp.Domain.Enums
-@inject SignInManager<User> SignInManager
+@inject IHttpContextAccessor contextAccessor
 @model X.PagedList.IPagedList<Car>
 @{
     ViewData["Title"] = "Home Page";
+}
+
+@{
+    var isAuthenticated = !string.IsNullOrEmpty(contextAccessor.HttpContext.Session.GetString("JwtToken"));
+
+    string? userId = null;
+
+    if (isAuthenticated)
+    {
+        var jwtToken = contextAccessor.HttpContext.Session.GetString("JwtToken");
+
+        if (!string.IsNullOrEmpty(jwtToken))
+        {
+            var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jsonToken = tokenHandler.ReadToken(jwtToken) as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
+
+            if (jsonToken != null)
+            {
+                userId = jsonToken.Claims.FirstOrDefault(claim => claim.Type == "nameid")?.Value;
+            }
+        }
+    }
 }
 
 <article class="index-page">
@@ -20,7 +42,7 @@
             </p>
             <partial name="_ErrorNotification"/>
             <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-center">
-                @if (!SignInManager.IsSignedIn(User))
+                @if (!isAuthenticated)
                 {
                     <p class="lead mb-3" style="font-weight: 500">Please register to create listings.</p>
                 }
@@ -173,11 +195,11 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div class="btn-group" style="margin-bottom: 10px;">
                                                 <a class="btn btn-sm btn-outline-secondary" asp-controller="Home" asp-action="Detail" asp-route-id="@car.Id">View</a>
-                                                @if ((User?.Identity?.IsAuthenticated == true && User.IsInRole("admin")) || (User?.Identity?.IsAuthenticated == true && User?.GetUserId() == car.UserId))
+                                                @if (userId != null && userId == car.UserId)
                                                 {
                                                     <a asp-controller="Home" asp-action="Edit" asp-route-id="@car.Id" type="button" class="btn btn-sm btn-outline-primary">Edit</a>
                                                 }
-                                                @if ((User?.Identity?.IsAuthenticated == true && User.IsInRole("admin")) || (User?.Identity?.IsAuthenticated == true && User?.GetUserId() == car.UserId))
+                                                @if (userId != null && userId == car.UserId)
                                                 {
 
                                                     <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#deleteCarModal_@car.Id">
@@ -252,7 +274,7 @@
 <script>
     const deleteCar = (carId) => {
         $.ajax({
-            url: 'http://localhost:7275/api/cars/delete/' + carId,
+            url: '/Home/Delete/' + carId,
             type: 'POST',
             success: () => location.reload(),
             error: () => window.location.href = '/Home/Index'

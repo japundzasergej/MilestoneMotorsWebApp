@@ -5,7 +5,6 @@ using MilestoneMotorsWebApp.Common.DTO;
 using MilestoneMotorsWebApp.Common.Interfaces;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
-using MilestoneMotorsWebApp.Infrastructure.Repositories;
 
 namespace MilestoneMotorsWebApp.Business.Handlers.CarHandlers.Commands
 {
@@ -21,23 +20,57 @@ namespace MilestoneMotorsWebApp.Business.Handlers.CarHandlers.Commands
     {
         private readonly IPhotoService _photoService = photoService;
 
-        private async Task<List<string>> CloudinaryUpload(List<IFormFile?> files)
+        private static List<byte[]> FilterNonNullByteArrays(params byte[][] byteArrays)
+        {
+            List<byte[]> result =  [ ];
+
+            foreach (byte[] byteArray in byteArrays)
+            {
+                if (byteArray != null && byteArray.Length > 0)
+                {
+                    result.Add(byteArray);
+                }
+            }
+
+            return result;
+        }
+
+        private async Task<List<string>> CloudinaryUpload(
+            List<byte[]> byteArrayList,
+            List<string> contentTypeList
+        )
         {
             List<string> result =  [ ];
-            if (files != null)
+
+            for (int index = 0; index < byteArrayList.Count; index++)
             {
-                foreach (var file in files)
+                var file = byteArrayList[index];
+
+                if (file != null)
                 {
-                    if (file != null)
+                    using var memoryStream = new MemoryStream(file);
+                    await memoryStream.WriteAsync(file);
+
+                    var convertedFile = new FormFile(
+                        memoryStream,
+                        0,
+                        memoryStream.Length,
+                        "file",
+                        $"image{index}"
+                    )
                     {
-                        var imageFile = await _photoService.AddPhotoAsync(file);
-                        if (imageFile != null)
-                        {
-                            result.Add(imageFile.Url.ToString());
-                        }
+                        Headers = new HeaderDictionary(),
+                        ContentType = contentTypeList[index]
+                    };
+
+                    var imageFile = await _photoService.AddPhotoAsync(convertedFile);
+                    if (imageFile != null)
+                    {
+                        result.Add(imageFile.Url.ToString());
                     }
                 }
             }
+
             return result;
         }
 
@@ -46,37 +79,21 @@ namespace MilestoneMotorsWebApp.Business.Handlers.CarHandlers.Commands
             CancellationToken cancellationToken
         )
         {
-            var carDto = request.CarDto;
+            var carDto = request.CreateCarDto;
             var imageServiceDto = new ImageServiceDto();
-            string? headlinerImage;
-            if (carDto.HeadlinerImageUrl != null)
-            {
-                var photoResult = await _photoService.AddPhotoAsync(carDto.HeadlinerImageUrl);
-                if (photoResult != null)
-                {
-                    headlinerImage = photoResult.Url.ToString();
-                }
-                else
-                {
-                    imageServiceDto.ImageServiceDown = true;
-                    headlinerImage = null;
-                }
-            }
-            else
-            {
-                headlinerImage = null;
-            }
 
-            List<IFormFile?> files =
-            [
+            List<byte[]> byteList = FilterNonNullByteArrays(
+                carDto?.HeadlinerImageUrl,
                 carDto?.PhotoOne,
                 carDto?.PhotoTwo,
                 carDto?.PhotoThree,
                 carDto?.PhotoFour,
-                carDto?.PhotoFive,
-            ];
+                carDto?.PhotoFive
+            );
 
-            List<string> imagesUrl = await CloudinaryUpload(files) ?? [ ];
+            List<string> contentTypeList = carDto.ImageContentTypes;
+
+            List<string> imagesUrl = await CloudinaryUpload(byteList, contentTypeList);
 
             if (imagesUrl.Count == 0)
             {
@@ -84,11 +101,18 @@ namespace MilestoneMotorsWebApp.Business.Handlers.CarHandlers.Commands
             }
 
             var car = _mapperService.Map<CreateCarDto, Car>(carDto);
-            car.HeadlinerImageUrl = headlinerImage ?? "";
-            car.ImagesUrl = imagesUrl;
+            car.CreatedAt = DateTime.UtcNow;
+            car.HeadlinerImageUrl = imagesUrl[0];
+            var carImages = imagesUrl.Skip(1).ToList();
+            car.ImagesUrl = carImages;
 
             var result = await _repository.Add(car);
+            if (result)
+            {
+                return imageServiceDto;
+            }
 
+            imageServiceDto.DbSuccessful = false;
             return imageServiceDto;
         }
     }

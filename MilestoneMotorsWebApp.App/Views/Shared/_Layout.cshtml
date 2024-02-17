@@ -1,9 +1,27 @@
-﻿@using Microsoft.AspNetCore.Identity
-@inject UserManager<User> UserManager
-@inject SignInManager<User> SignInManager
+﻿@using System.Security.Claims
+@inject IHttpContextAccessor contextAccessor
 
 @{
-    var currentUser = await UserManager.GetUserAsync(User);
+    var isAuthenticated = !string.IsNullOrEmpty(contextAccessor.HttpContext.Session.GetString("JwtToken"));
+    string? userId = null;
+    string? userName = null;
+    string? profilePictureUrl = null;
+
+    if (isAuthenticated)
+    {
+        var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var jwtToken = contextAccessor.HttpContext.Session.GetString("JwtToken");
+
+        if (!string.IsNullOrEmpty(jwtToken))
+        {
+            var jsonToken = tokenHandler.ReadToken(jwtToken) as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
+
+            userId = jsonToken.Claims.FirstOrDefault(claim => claim.Type == "nameid")?.Value;
+            userName = jsonToken.Claims.FirstOrDefault(claim => claim.Type == "unique_name")?.Value;
+            profilePictureUrl = jsonToken.Claims.FirstOrDefault(claim => claim.Type == "given_name")?.Value;
+        }
+    }
+
 }
 
 <!DOCTYPE html>
@@ -32,7 +50,7 @@
                     </a>
                 </div>
                 <div class="d-flex justify-content-end">
-                    @if (!SignInManager.IsSignedIn(User) || currentUser == null)
+                    @if (!isAuthenticated)
                     {
                         <div class="d-flex align-items-center">
                             <a asp-controller="Account" asp-action="Login" class="btn btn-warning text-black shadow-sm" style="font-weight: 600; margin-right: 10px;">
@@ -47,21 +65,21 @@
                     {
                         <div class="dropdown d-flex" style="font-size:20px; font-weight: 500; color: aliceblue;">
                             <div class="profile-picture">
-                                @if (string.IsNullOrWhiteSpace(currentUser?.ProfilePictureImageUrl))
+                                @if (string.IsNullOrWhiteSpace(profilePictureUrl))
                                 {
                                     <img src="/assets//default.png" alt="default" class="profile-image" />
                                 }
                                 else
                                 {
-                                    <img src="@currentUser?.ProfilePictureImageUrl" alt="@currentUser?.UserName" class="profile-image" />
+                                    <img src="@profilePictureUrl" alt="@userName" class="profile-image" />
                                 }
                             </div>
                             <a class="nav-link dropdown-toggle user" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-                                @currentUser?.UserName
+                                @userName
                             </a>
                             <div class="dropdown-menu">
-                                <a class="dropdown-item" asp-controller="User" asp-action="Detail" asp-route-id="@currentUser?.Id">View Profile</a>
-                                <a asp-controller="User" asp-action="EditPage" asp-route-id="@currentUser?.Id" class="dropdown-item">Edit Profile</a>
+                                <a class="dropdown-item" asp-controller="User" asp-action="Detail" asp-route-id="@userId">View Profile</a>
+                                <a asp-controller="User" asp-action="EditPage" asp-route-id="@userId" class="dropdown-item">Edit Profile</a>
                                 <a asp-controller="User" asp-action="MyListings" class="dropdown-item">My Listings</a>
                                 <div class="dropdown-divider"></div>
                                 <a asp-controller="Account" asp-action="Logout" class="dropdown-item">Logout</a>

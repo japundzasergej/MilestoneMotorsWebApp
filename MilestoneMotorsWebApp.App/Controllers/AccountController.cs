@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Controllers;
 using MilestoneMotorsWebApp.Common.DTO;
 using MilestoneMotorsWebApp.Common.Interfaces;
@@ -9,12 +10,15 @@ using Newtonsoft.Json;
 
 namespace MilestoneMotorsWeb.Controllers
 {
-    public class AccountController(IMapperService mapperService, IHttpClientFactory clientFactory)
-        : BaseController(mapperService, clientFactory)
+    public class AccountController(
+        IMapperService mapperService,
+        IHttpClientFactory clientFactory,
+        IConfiguration configuration
+    ) : BaseController(mapperService, clientFactory, configuration)
     {
         public override UriBuilder CloneApiUrl()
         {
-            return base.CloneApiUrl().ExtendPath("account");
+            return base.CloneApiUrl().ExtendPath("Account");
         }
 
         [HttpGet]
@@ -33,9 +37,10 @@ namespace MilestoneMotorsWeb.Controllers
                     registerVM
                 );
                 string apiUrl = CloneApiUrl().ExtendPath("/register").ToString();
-                using var client = _httpClientFactory.CreateClient();
+                using var client = GetClientFactory();
+                var payload = new { RegisterUserDto = userDto, };
                 var jsonUserDto = new StringContent(
-                    JsonConvert.SerializeObject(userDto),
+                    JsonConvert.SerializeObject(payload),
                     Encoding.UTF8,
                     "application/json"
                 );
@@ -59,7 +64,7 @@ namespace MilestoneMotorsWeb.Controllers
                     {
                         foreach (var error in registerFeedbackDto.ErrorList)
                         {
-                            TempData["Error"] = error;
+                            TempData["Error"] = error.Description;
                         }
                     }
 
@@ -68,7 +73,7 @@ namespace MilestoneMotorsWeb.Controllers
                 }
                 else
                 {
-                    TempData["Error"] = "Something went wrong.";
+                    TempData["Error"] = await response.Content.ReadAsStringAsync();
                     return View(registerVM);
                 }
             }
@@ -90,13 +95,14 @@ namespace MilestoneMotorsWeb.Controllers
                 var loginDto = _mapperService.Map<LoginUserViewModel, LoginUserDto>(loginVM);
                 var apiUrl = CloneApiUrl().ExtendPath("/login").ToString();
 
+                var payload = new { LoginUserDto = loginDto, };
                 var jsonLoginDto = new StringContent(
-                    JsonConvert.SerializeObject(loginDto),
+                    JsonConvert.SerializeObject(payload),
                     Encoding.UTF8,
                     "application/json"
                 );
 
-                using var client = _httpClientFactory.CreateClient();
+                using var client = GetClientFactory();
 
                 var response = await client.PostAsync(apiUrl, jsonLoginDto);
 
@@ -119,32 +125,26 @@ namespace MilestoneMotorsWeb.Controllers
                         return View(loginVM);
                     }
 
+                    HttpContext.Session.SetString("JwtToken", loginFeedbackDto.Token);
+
                     TempData["Success"] = "Login successful!";
                     return RedirectToAction("Index", "Home");
                 }
                 else
                 {
-                    TempData["Error"] = "Something went wrong.";
+                    TempData["Error"] = await response.Content.ReadAsStringAsync();
                     return View(loginVM);
                 }
             }
             return View(loginVM);
         }
 
+        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpGet]
         public async Task<IActionResult> Logout()
         {
-            var apiUrl = CloneApiUrl().ExtendPath("/logout").ToString();
-            using var client = _httpClientFactory.CreateClient();
-            var response = await client.GetAsync(apiUrl);
-            if (response.IsSuccessStatusCode)
-            {
-                return RedirectToAction("Index", "Home");
-            }
-            else
-            {
-                return NotFound();
-            }
+            HttpContext.Session.Remove("JwtToken");
+            return RedirectToAction("Index", "Home");
         }
     }
 }

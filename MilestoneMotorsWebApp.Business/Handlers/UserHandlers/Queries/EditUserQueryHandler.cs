@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MilestoneMotorsWebApp.Business.Users.Queries;
+﻿using MilestoneMotorsWebApp.Business.Users.Queries;
 using MilestoneMotorsWebApp.Common.DTO;
 using MilestoneMotorsWebApp.Common.Interfaces;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
-using MilestoneMotorsWebApp.Infrastructure.Repositories;
 
 namespace MilestoneMotorsWebApp.Business.Handlers.UserHandlers.Queries
 {

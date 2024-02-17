@@ -1,37 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MilestoneMotorsWebApp.Business.Cars.Queries;
-using MilestoneMotorsWebApp.Business.Interfaces;
+﻿using MilestoneMotorsWebApp.Business.Cars.Queries;
 using MilestoneMotorsWebApp.Common.DTO;
+using MilestoneMotorsWebApp.Common.Interfaces;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
 
 namespace MilestoneMotorsWebApp.Business.Handlers.CarHandlers.Queries
 {
-    public class EditCarQueryHandler(ICarsRepository carsRepository)
-        : BaseHandler<EditCarQuery, EditCarDto?, ICarsRepository>(carsRepository, null)
+    public class EditCarQueryHandler(ICarsRepository carsRepository, IMapperService mapperService)
+        : BaseHandler<EditCarQuery, EditCarDto, ICarsRepository>(carsRepository, mapperService)
     {
-        public override async Task<EditCarDto?> Handle(
+        public override async Task<EditCarDto> Handle(
             EditCarQuery request,
             CancellationToken cancellationToken
         )
         {
             var id = request.Id;
+            EditCarDto carDto = new();
             if (id == 0)
             {
-                return null;
+                carDto.IsSuccessful = false;
+                return carDto;
             }
 
             var userCar = await _repository.GetCarByIdAsync(id);
 
             if (userCar == null)
             {
-                return null;
+                carDto.IsSuccessful = false;
+                return carDto;
             }
-            EditCarDto carDto = _mapperService.Map<Car, EditCarDto>(userCar);
+            carDto = _mapperService.Map<Car, EditCarDto>(userCar);
             var capacity = userCar.EngineCapacity.Split(" ");
             var mileage = userCar.Mileage.Split(" ");
             var enginePower = userCar.EnginePower.Split(" ");

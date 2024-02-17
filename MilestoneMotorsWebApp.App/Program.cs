@@ -1,26 +1,14 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Identity;
+using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.Business;
-using MilestoneMotorsWebApp.Domain.Entities;
-using MilestoneMotorsWebApp.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
-builder.Services.AddAppInjection(builder.Configuration);
-builder.Services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
-builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 builder.Services.AddSession();
-builder
-    .Services
-    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/Account/Login";
-    });
-
+builder.Services.AddControllersWithViews();
+builder.Services.AddAppInjection(builder.Configuration);
+builder.Services.AddScoped<JwtSessionAuthenticationAttribute>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -37,6 +25,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();

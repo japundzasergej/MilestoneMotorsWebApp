@@ -6,11 +6,9 @@ using MilestoneMotorsWebApp.Domain.Constants;
 using MilestoneMotorsWebApp.Domain.Entities;
 
 public class RegisterUserCommandHandler(
-    SignInManager<User> signInManager,
     UserManager<User> userManager
 ) : IRequestHandler<RegisterUserCommand, RegisterUserFeedbackDto>
 {
-    private readonly SignInManager<User> _signInManager = signInManager;
     private readonly UserManager<User> _userManager = userManager;
 
     public async Task<RegisterUserFeedbackDto> Handle(

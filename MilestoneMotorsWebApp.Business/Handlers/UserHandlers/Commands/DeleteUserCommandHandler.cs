@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using MilestoneMotorsWebApp.Business.Users.Commands;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
-using MilestoneMotorsWebApp.Infrastructure.Repositories;
 
 namespace MilestoneMotorsWebApp.Business.Handlers.UserHandlers.Commands
 {

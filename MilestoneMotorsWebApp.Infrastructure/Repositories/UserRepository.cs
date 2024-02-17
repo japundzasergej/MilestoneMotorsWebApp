@@ -35,6 +35,7 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
                 return null;
             }
             var user = await _db.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Id == id);
+            _db.Entry(user).State = EntityState.Detached;
             if (user == null)
             {
                 return null;

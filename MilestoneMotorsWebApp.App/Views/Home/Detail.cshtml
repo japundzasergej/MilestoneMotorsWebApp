@@ -1,5 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Identity
-@inject SignInManager<User> SignInManager
+@inject IHttpContextAccessor contextAccessor
 @model Car
 @{
     string title;
@@ -14,7 +14,9 @@
     }
     ViewData["Title"] = title;
 }
-
+@{
+    var isAuthenticated = !string.IsNullOrEmpty(contextAccessor.HttpContext.Session.GetString("JwtToken"));
+}
 
 <div class="container mt-4">
     <nav aria-label="breadcrumb" role="navigation" class="bg-tertiary text-white">
@@ -101,7 +103,7 @@
                             <h2 class="mt-5">
                                 @Model.Price
                             </h2>
-                            @if(SignInManager.IsSignedIn(User))
+                            @if(isAuthenticated)
                             {
                                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#contactSeller">
                                     Contact Seller
