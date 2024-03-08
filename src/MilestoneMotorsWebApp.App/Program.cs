@@ -1,7 +1,6 @@
 using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.Services;
-using MilestoneMotorsWebApp.Business;
 using MilestoneMotorsWebApp.Business.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);

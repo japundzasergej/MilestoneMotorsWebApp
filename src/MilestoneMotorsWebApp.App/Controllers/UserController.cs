@@ -1,14 +1,8 @@
-﻿using System.Text;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Controllers;
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.ViewModels;
-using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Business.Interfaces;
-using MilestoneMotorsWebApp.Business.Utilities;
-using MilestoneMotorsWebApp.Domain.Entities;
-using Newtonsoft.Json;
 
 namespace MilestoneMotorsWeb.Controllers
 {

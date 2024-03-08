@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MilestoneMotorsWebApp.Business.Cars.Helpers
+﻿namespace MilestoneMotorsWebApp.Business.Cars.Helpers
 {
     public static class FilterBytes
     {

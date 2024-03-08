@@ -1,14 +1,9 @@
 ﻿using System.Text;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Controllers;
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.ViewModels;
-using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Business.Interfaces;
-using MilestoneMotorsWebApp.Business.Utilities;
-using Newtonsoft.Json;
 
 namespace MilestoneMotorsWeb.Controllers
 {
@@ -18,6 +13,11 @@ namespace MilestoneMotorsWeb.Controllers
         [HttpGet]
         public IActionResult Register()
         {
+            var isAuthenticated = !string.IsNullOrEmpty(HttpContext.Session.GetString("JwtToken"));
+            if (isAuthenticated)
+            {
+                return RedirectToAction("Index", "Home");
+            }
             var registerVM = new RegisterUserViewModel();
             return View(registerVM);
         }
@@ -59,6 +59,11 @@ namespace MilestoneMotorsWeb.Controllers
         [HttpGet]
         public IActionResult Login()
         {
+            var isAuthenticated = !string.IsNullOrEmpty(HttpContext.Session.GetString("JwtToken"));
+            if (isAuthenticated)
+            {
+                return RedirectToAction("Index", "Home");
+            }
             var loginVM = new LoginUserViewModel();
             return View(loginVM);
         }
@@ -66,6 +71,11 @@ namespace MilestoneMotorsWeb.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(LoginUserViewModel loginVM)
         {
+            var isAuthenticated = !string.IsNullOrEmpty(HttpContext.Session.GetString("JwtToken"));
+            if (isAuthenticated)
+            {
+                return RedirectToAction("Index", "Home");
+            }
             if (ModelState.IsValid)
             {
                 var loginFeedbackDto = await _service.LoginUser(loginVM);

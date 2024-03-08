@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Http;
 using MilestoneMotorsWebApp.Business.DTO;
 using MilestoneMotorsWebApp.Business.Interfaces;
 using MilestoneMotorsWebApp.Business.Utilities;

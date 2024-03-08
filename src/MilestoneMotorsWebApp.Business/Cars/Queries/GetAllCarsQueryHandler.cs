@@ -1,9 +1,7 @@
 ﻿using MediatR;
 using MilestoneMotorsWebApp.Business.Cars.Helpers;
 using MilestoneMotorsWebApp.Domain.Entities;
-using MilestoneMotorsWebApp.Domain.Enums;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
-using Condition = MilestoneMotorsWebApp.Domain.Enums.Condition;
 
 namespace MilestoneMotorsWebApp.Business.Cars.Queries
 {

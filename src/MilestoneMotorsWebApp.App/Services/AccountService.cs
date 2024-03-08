@@ -2,7 +2,6 @@
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.ViewModels;
 using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Business.Interfaces;
 using MilestoneMotorsWebApp.Business.Utilities;
 using Newtonsoft.Json;
 

@@ -1,6 +1,4 @@
-﻿using System.Net.Http.Headers;
-using Microsoft.AspNetCore.Mvc;
-using MilestoneMotorsWebApp.Business.Interfaces;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace MilestoneMotorsWebApp.App.Controllers
 {

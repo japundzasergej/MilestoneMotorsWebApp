@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Http;
 using MilestoneMotorsWebApp.Domain.Enums;
 
 namespace MilestoneMotorsWebApp.App.ViewModels
