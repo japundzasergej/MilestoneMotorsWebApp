@@ -1,15 +1,21 @@
 ﻿using MediatR;
+using MilestoneMotorsWebApp.Business.DTO;
+using MilestoneMotorsWebApp.Business.Helpers;
+using MilestoneMotorsWebApp.Business.Interfaces;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
 
 namespace MilestoneMotorsWebApp.Business.Cars.Queries
 {
-    public class GetSingleCarQueryHandler(ICarsRepository carsRepository)
-        : IRequestHandler<GetSingleCarQuery, Car?>
+    public class GetSingleCarQueryHandler(
+        ICarsRepository carsRepository,
+        IMapperService mapperService
+    ) : IRequestHandler<GetSingleCarQuery, ResponseDTO>
     {
         private readonly ICarsRepository _carsRepository = carsRepository;
+        private readonly IMapperService _mapperService = mapperService;
 
-        public async Task<Car?> Handle(
+        public async Task<ResponseDTO> Handle(
             GetSingleCarQuery request,
             CancellationToken cancellationToken
         )
@@ -17,16 +23,26 @@ namespace MilestoneMotorsWebApp.Business.Cars.Queries
             var id = request.Id;
             if (id == 0)
             {
-                return null;
+                return PopulateResponseDto.OnFailure(404);
             }
 
-            var carDetail = await _carsRepository.GetCarByIdAsync(id);
-
-            if (carDetail == null)
+            try
             {
-                return null;
+                var carDetail = await _carsRepository.GetCarByIdAsync(id);
+
+                if (carDetail == null)
+                {
+                    return PopulateResponseDto.OnFailure(404);
+                }
+                return PopulateResponseDto.OnSuccess(
+                    _mapperService.Map<Car, CarDto>(carDetail),
+                    200
+                );
             }
-            return carDetail;
+            catch (Exception e)
+            {
+                return PopulateResponseDto.OnError(e);
+            }
         }
     }
 }

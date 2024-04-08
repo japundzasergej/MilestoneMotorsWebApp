@@ -3,23 +3,25 @@ using Microsoft.AspNetCore.Mvc;
 using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Controllers;
 using MilestoneMotorsWebApp.App.Interfaces;
+using MilestoneMotorsWebApp.App.Models;
 using MilestoneMotorsWebApp.App.ViewModels;
+using MilestoneMotorsWebApp.Business.DTO;
 
 namespace MilestoneMotorsWeb.Controllers
 {
-    public class AccountController(IAccountService accountService)
-        : BaseController<IAccountService>(accountService)
+    public class AccountController(IAccountService accountService, IMvcMapperService mapperService)
+        : BaseController<IAccountService>(accountService, mapperService)
     {
         [HttpGet]
         public IActionResult Register()
         {
             var isAuthenticated = !string.IsNullOrEmpty(HttpContext.Session.GetString("JwtToken"));
+
             if (isAuthenticated)
             {
                 return RedirectToAction("Index", "Home");
             }
-            var registerVM = new RegisterUserViewModel();
-            return View(registerVM);
+            return View(new RegisterUserViewModel());
         }
 
         [HttpPost]
@@ -27,31 +29,38 @@ namespace MilestoneMotorsWeb.Controllers
         {
             if (ModelState.IsValid)
             {
-                var registerFeedbackDto = await _service.RegisterUser(registerVM);
+                var response = await _service.RegisterUser(
+                    _mapperService.Map<RegisterUserViewModel, RegisterUserDto>(registerVM)
+                );
 
-                if (registerFeedbackDto == null)
-                {
-                    TempData["Error"] = "Something went wrong, please try again later.";
-                    return View(registerVM);
-                }
+                var errorCheck = HandleErrors(
+                    response,
+                    new FailureResponse { ViewModel = registerVM }
+                );
 
-                if (registerFeedbackDto.UserExists)
+                if (errorCheck == null && response.Body != null)
                 {
-                    TempData["Error"] = "User already exists with that username.";
-                    return View(registerVM);
-                }
+                    var registerFeedbackDto = ConvertFromJson<RegisterUserFeedbackDto>(
+                        response.Body
+                    );
 
-                if (registerFeedbackDto.ResponseFailed)
-                {
-                    foreach (var error in registerFeedbackDto.ErrorList)
+                    if (registerFeedbackDto.UserExists)
                     {
-                        TempData["Error"] = error.Description;
+                        TempData["Error"] = "User already exists with that username.";
                         return View(registerVM);
                     }
-                }
 
-                TempData["Success"] = "Account successfully created!";
-                return RedirectToAction("Login", "Account");
+                    if (registerFeedbackDto.ResponseFailed)
+                    {
+                        foreach (var error in registerFeedbackDto.ErrorList)
+                        {
+                            TempData["Error"] = error.Description;
+                            return View(registerVM);
+                        }
+                    }
+                    TempData["Success"] = "Account successfully created!";
+                    return RedirectToAction("Login", "Account");
+                }
             }
             return View(registerVM);
         }
@@ -64,8 +73,7 @@ namespace MilestoneMotorsWeb.Controllers
             {
                 return RedirectToAction("Index", "Home");
             }
-            var loginVM = new LoginUserViewModel();
-            return View(loginVM);
+            return View(new LoginUserViewModel());
         }
 
         [HttpPost]
@@ -78,30 +86,33 @@ namespace MilestoneMotorsWeb.Controllers
             }
             if (ModelState.IsValid)
             {
-                var loginFeedbackDto = await _service.LoginUser(loginVM);
+                var response = await _service.LoginUser(
+                    _mapperService.Map<LoginUserViewModel, LoginUserDto>(loginVM)
+                );
 
-                if (loginFeedbackDto == null)
+                var error = HandleErrors(response, new FailureResponse { ViewModel = loginVM });
+
+                if (error == null && response.Body != null)
                 {
-                    TempData["Error"] = "Something went wrong, please try again later.";
-                    return View(loginVM);
+                    var loginFeedbackDto = ConvertFromJson<LoginUserFeedbackDto>(response.Body);
+
+                    if (!loginFeedbackDto.IsValidUser)
+                    {
+                        TempData["Error"] = "No user registered with that email.";
+                        return View(loginVM);
+                    }
+
+                    if (loginFeedbackDto.IsNotPasswordsMatching)
+                    {
+                        TempData["Error"] = "Invalid password.";
+                        return View(loginVM);
+                    }
+
+                    HttpContext.Session.SetString("JwtToken", loginFeedbackDto.Token);
+
+                    TempData["Success"] = "Login successful!";
+                    return RedirectToAction("Index", "Home");
                 }
-
-                if (!loginFeedbackDto.IsValidUser)
-                {
-                    TempData["Error"] = "No user registered with that email.";
-                    return View(loginVM);
-                }
-
-                if (loginFeedbackDto.IsNotPasswordsMatching)
-                {
-                    TempData["Error"] = "Invalid password.";
-                    return View(loginVM);
-                }
-
-                HttpContext.Session.SetString("JwtToken", loginFeedbackDto.Token);
-
-                TempData["Success"] = "Login successful!";
-                return RedirectToAction("Index", "Home");
             }
             return View(loginVM);
         }

@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MilestoneMotorsWebApp.Business.DTO;
 using MilestoneMotorsWebApp.Business.Users.Commands;
@@ -11,39 +12,51 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
     [Route("api/[controller]")]
     public class UserController(IMediator mediator) : BaseController(mediator)
     {
+        [Authorize]
         [HttpGet]
         [Route("{id}")]
-        public async Task<User?> GetUserDetail([FromRoute] GetUserDetailQuery query)
+        public async Task<ResponseDTO> GetUserDetail([FromRoute] GetUserDetailQuery query)
         {
             return await _mediator.Send(query);
         }
 
+        [Authorize]
         [HttpGet]
         [Route("edit/{id}")]
-        public async Task<EditUserDto?> GetEditUser([FromRoute] EditUserQuery query)
+        public async Task<ResponseDTO> GetEditUser([FromRoute] EditUserQuery query)
         {
             return await _mediator.Send(query);
         }
 
-        [HttpPost]
+        [Authorize]
+        [HttpPut]
         [Route("edit")]
-        public async Task<EditUserFeedbackDto> PostEditUser([FromBody] EditUserCommand command)
+        public async Task<ResponseDTO> PostEditUser([FromBody] EditUserCommand command)
+        {
+            return await _mediator.Send(command);
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("userCars/{id}")]
+        public async Task<ResponseDTO> GetUserCars([FromRoute] GetUserCarsQuery query)
+        {
+            return await _mediator.Send(query);
+        }
+
+        [Authorize]
+        [HttpDelete]
+        [Route("delete/{id}")]
+        public async Task<ResponseDTO> DeleteUser([FromRoute] DeleteUserCommand command)
         {
             return await _mediator.Send(command);
         }
 
         [HttpGet]
-        [Route("userCars/{id}")]
-        public async Task<IEnumerable<Car>> GetUserCars([FromRoute] GetUserCarsQuery query)
+        [Route("profilePicture/{id}")]
+        public async Task<ResponseDTO> GetProfilePicture([FromRoute] GetProfilePictureQuery query)
         {
             return await _mediator.Send(query);
-        }
-
-        [HttpPost]
-        [Route("delete/{id}")]
-        public async Task<bool?> DeleteUser([FromRoute] DeleteUserCommand command)
-        {
-            return await _mediator.Send(command);
         }
     }
 }

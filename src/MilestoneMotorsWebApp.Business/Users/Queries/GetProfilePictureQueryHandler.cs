@@ -1,41 +1,37 @@
-﻿using MediatR;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using MediatR;
 using MilestoneMotorsWebApp.Business.DTO;
 using MilestoneMotorsWebApp.Business.Helpers;
-using MilestoneMotorsWebApp.Business.Interfaces;
-using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
 
 namespace MilestoneMotorsWebApp.Business.Users.Queries
 {
-    public class EditUserQueryHandler(IMapperService mapperService, IUserRepository userRepository)
-        : IRequestHandler<EditUserQuery, ResponseDTO>
+    public class GetProfilePictureQueryHandler(IUserRepository userRepository)
+        : IRequestHandler<GetProfilePictureQuery, ResponseDTO>
     {
         private readonly IUserRepository _userRepository = userRepository;
-        private readonly IMapperService _mapperService = mapperService;
 
         public async Task<ResponseDTO> Handle(
-            EditUserQuery request,
+            GetProfilePictureQuery request,
             CancellationToken cancellationToken
         )
         {
-            var id = request.Id;
-
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrEmpty(request.Id))
             {
                 return PopulateResponseDto.OnFailure(404);
             }
-
             try
             {
-                var userPage = await _userRepository.GetByIdAsync(id);
-
-                if (userPage == null)
+                var result = await _userRepository.GetUserProfilePictureAsync(request.Id);
+                if (result == null)
                 {
                     return PopulateResponseDto.OnFailure(404);
                 }
-
-                var userDto = _mapperService.Map<User, EditUserDto>(userPage);
-                return PopulateResponseDto.OnSuccess(userDto, 200);
+                return PopulateResponseDto.OnSuccess(result, 200);
             }
             catch (Exception e)
             {

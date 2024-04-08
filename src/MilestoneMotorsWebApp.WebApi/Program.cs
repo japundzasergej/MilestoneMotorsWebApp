@@ -1,7 +1,12 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
 using MilestoneMotorsWebApp.Business;
+using MilestoneMotorsWebApp.Business.DTO;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure;
+using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 var url = builder.Configuration["JwtSettings:Audience"];
@@ -14,7 +19,40 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddApiInjection(builder.Configuration);
 builder.Services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
-builder.Services.AddAuthInjection(builder.Configuration);
+builder
+    .Services
+    .AddAuthentication("Bearer")
+    .AddJwtBearer(
+        "Bearer",
+        options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+                ValidAudience = builder.Configuration["JwtSettings:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"])
+                )
+            };
+            options.Events = new JwtBearerEvents
+            {
+                OnChallenge = context =>
+                {
+                    context.HandleResponse();
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.ContentType = "application/json";
+                    var result = JsonConvert.SerializeObject(
+                        new ResponseDTO { IsSuccessful = false, StatusCode = 401 }
+                    );
+                    return context.Response.WriteAsync(result);
+                }
+            };
+        }
+    );
 builder
     .Services
     .AddCors(options =>

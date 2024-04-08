@@ -4,7 +4,7 @@ using MilestoneMotorsWebApp.Business.DTO;
 
 namespace MilestoneMotorsWebApp.Business.Cars.Commands
 {
-    public class EditCarCommand : IRequest<bool?>
+    public class EditCarCommand : IRequest<ResponseDTO>
     {
         [FromBody]
         public EditCarDto EditCarDto { get; set; }

@@ -1,5 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
+using MilestoneMotorsWebApp.Business.DTO;
+using MilestoneMotorsWebApp.Business.Helpers;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
 
@@ -8,25 +10,32 @@ namespace MilestoneMotorsWebApp.Business.Users.Commands
     public class DeleteUserCommandHandler(
         IUserRepository userRepository,
         SignInManager<User> signInManager
-    ) : IRequestHandler<DeleteUserCommand, bool?>
+    ) : IRequestHandler<DeleteUserCommand, ResponseDTO>
     {
         private readonly IUserRepository _userRepository = userRepository;
         private readonly SignInManager<User> _signInManager = signInManager;
 
-        public async Task<bool?> Handle(
+        public async Task<ResponseDTO> Handle(
             DeleteUserCommand request,
             CancellationToken cancellationToken
         )
         {
             var id = request.Id;
-            var user = await _userRepository.GetByIdAsync(id);
-            if (user == null)
+            try
             {
-                return null;
+                var user = await _userRepository.GetByIdAsync(id);
+                if (user == null)
+                {
+                    return PopulateResponseDto.OnFailure(404);
+                }
+                await _userRepository.Delete(user);
+                await _signInManager.SignOutAsync();
+                return PopulateResponseDto.OnSuccess(true, 202);
             }
-            await _userRepository.Delete(user);
-            await _signInManager.SignOutAsync();
-            return true;
+            catch (Exception e)
+            {
+                return PopulateResponseDto.OnError(e);
+            }
         }
     }
 }

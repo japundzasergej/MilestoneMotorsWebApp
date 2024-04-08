@@ -5,7 +5,7 @@ namespace MilestoneMotorsWebApp.App.Interfaces
 {
     public interface IAccountService
     {
-        Task<RegisterUserFeedbackDto?> RegisterUser(RegisterUserViewModel registerVM);
-        Task<LoginUserFeedbackDto?> LoginUser(LoginUserViewModel loginVM);
+        Task<ResponseDTO> RegisterUser(RegisterUserDto dto);
+        Task<ResponseDTO> LoginUser(LoginUserDto dto);
     }
 }

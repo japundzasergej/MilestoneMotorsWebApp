@@ -1,10 +1,11 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using MilestoneMotorsWebApp.Business.DTO;
 using MilestoneMotorsWebApp.Domain.Entities;
 
 namespace MilestoneMotorsWebApp.Business.Cars.Queries
 {
-    public class GetAllCarsQuery : IRequest<List<Car>>
+    public class GetAllCarsQuery : IRequest<ResponseDTO>
     {
         [FromQuery]
         public string? Search { get; set; }

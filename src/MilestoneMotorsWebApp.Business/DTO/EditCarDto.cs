@@ -31,7 +31,5 @@ namespace MilestoneMotorsWebApp.Business.DTO
 
         public YesOrNo Exchange { get; set; }
         public string? UserId { get; set; }
-
-        public bool IsSuccessful { get; set; } = true;
     }
 }
