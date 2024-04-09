@@ -38,7 +38,7 @@ namespace MilestoneMotorsWebApp.Business.Accounts.Commands
                     if (passwordCheck)
                     {
                         var tokenHandler = new JwtSecurityTokenHandler();
-                        var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:Key"]);
+                        var key = Encoding.UTF8.GetBytes(_configuration["JwtSettings:Key"]);
 
                         var tokenDescriptor = new SecurityTokenDescriptor
                         {
@@ -57,7 +57,7 @@ namespace MilestoneMotorsWebApp.Business.Accounts.Commands
                                     new(ClaimTypes.NameIdentifier, user.Id),
                                 }
                             ),
-                            Expires = DateTime.UtcNow.AddDays(1),
+                            Expires = DateTime.UtcNow.AddMinutes(120),
                             SigningCredentials = new SigningCredentials(
                                 new SymmetricSecurityKey(key),
                                 SecurityAlgorithms.HmacSha256Signature

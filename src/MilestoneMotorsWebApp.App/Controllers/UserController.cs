@@ -17,7 +17,13 @@ namespace MilestoneMotorsWeb.Controllers
         {
             var response = await _service.GetUserDetail(id, GetToken());
             var error = HandleErrors(response, new());
-            if (error == null && response.Body != null)
+
+            if (error != null)
+            {
+                return error;
+            }
+
+            if (response.Body != null)
             {
                 return View(
                     _mapperService.Map<UserDto, UserAccountViewModel>(
@@ -25,6 +31,7 @@ namespace MilestoneMotorsWeb.Controllers
                     )
                 );
             }
+            TempData["Error"] = "Something went wrong, please try again";
             return RedirectToAction("Index", "Home");
         }
 
@@ -35,7 +42,12 @@ namespace MilestoneMotorsWeb.Controllers
 
             var error = HandleErrors(response, new());
 
-            if (error == null && response.Body != null)
+            if (error != null)
+            {
+                return error;
+            }
+
+            if (response.Body != null)
             {
                 return View(
                     _mapperService.Map<EditUserDto, EditUserViewModel>(
@@ -44,6 +56,7 @@ namespace MilestoneMotorsWeb.Controllers
                 );
             }
 
+            TempData["Error"] = "Something went wrong, please try again";
             return RedirectToAction("Index", "Home");
         }
 
@@ -68,7 +81,12 @@ namespace MilestoneMotorsWeb.Controllers
                     }
                 );
 
-                if (error == null && response.Body != null)
+                if (error != null)
+                {
+                    return error;
+                }
+
+                if (response.Body != null)
                 {
                     var editUserFeedbackDto = ConvertFromJson<EditUserFeedbackDto>(response.Body);
                     if (editUserFeedbackDto.IsImageServiceDown)
@@ -90,13 +108,18 @@ namespace MilestoneMotorsWeb.Controllers
 
             var error = HandleErrors(response, new());
 
-            if (error == null && response.Body != null)
+            if (error != null)
+            {
+                return error;
+            }
+
+            if (response.Body != null)
             {
                 return View(
                     new GetUserCarsViewModel { Cars = ConvertFromJson<List<CarDto>>(response.Body) }
                 );
             }
-
+            TempData["Error"] = "Something went wrong, please try again";
             return RedirectToAction("Index", "Home");
         }
 
@@ -109,7 +132,12 @@ namespace MilestoneMotorsWeb.Controllers
 
             var error = HandleErrors(response, new());
 
-            if (error == null && response.Body != null)
+            if (error != null)
+            {
+                return error;
+            }
+
+            if (response.Body != null)
             {
                 var result = (bool)response.Body;
                 if (!result)
@@ -125,6 +153,7 @@ namespace MilestoneMotorsWeb.Controllers
                     return RedirectToAction("Index", "Home");
                 }
             }
+            TempData["Error"] = "Something went wrong, please try again";
             return RedirectToAction("Index", "Home");
         }
     }

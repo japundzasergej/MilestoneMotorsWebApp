@@ -40,7 +40,7 @@ namespace MilestoneMotorsWebApp.App.Services
 
                 if (!string.IsNullOrEmpty(apiRequest.AccessToken))
                 {
-                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                    message.Headers.Authorization = new AuthenticationHeaderValue(
                         "Bearer",
                         apiRequest.AccessToken
                     );

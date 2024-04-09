@@ -38,7 +38,12 @@ namespace MilestoneMotorsWeb.Controllers
                     new FailureResponse { ViewModel = registerVM }
                 );
 
-                if (errorCheck == null && response.Body != null)
+                if (errorCheck != null)
+                {
+                    return errorCheck;
+                }
+
+                if (response.Body != null)
                 {
                     var registerFeedbackDto = ConvertFromJson<RegisterUserFeedbackDto>(
                         response.Body
@@ -92,7 +97,12 @@ namespace MilestoneMotorsWeb.Controllers
 
                 var error = HandleErrors(response, new FailureResponse { ViewModel = loginVM });
 
-                if (error == null && response.Body != null)
+                if (error != null)
+                {
+                    return error;
+                }
+
+                if (response.Body != null)
                 {
                     var loginFeedbackDto = ConvertFromJson<LoginUserFeedbackDto>(response.Body);
 

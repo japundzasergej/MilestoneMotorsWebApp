@@ -43,7 +43,12 @@ namespace MilestoneMotorsWeb.Controllers
 
             var error = HandleErrors(response, new());
 
-            if (error == null && response.Body != null)
+            if (error != null)
+            {
+                return error;
+            }
+
+            if (response.Body != null)
             {
                 var searchedList = ConvertFromJson<List<CarDto>>(response.Body);
                 int pageSize = 6;
@@ -51,6 +56,7 @@ namespace MilestoneMotorsWeb.Controllers
 
                 return View(searchedList.ToPagedList(pageNumber, pageSize));
             }
+            TempData["Error"] = "Something went wrong, please try again";
             return View();
         }
 
@@ -62,12 +68,17 @@ namespace MilestoneMotorsWeb.Controllers
                 response,
                 new FailureResponse { ErrorMessage = "Not Found", StatusCode = 404 }
             );
+            if (error != null)
+            {
+                return error;
+            }
 
-            if (error == null && response.Body != null)
+            if (response.Body != null)
             {
                 return View(ConvertFromJson<CarDto>(response.Body));
             }
 
+            TempData["Error"] = "Something went wrong, please try again";
             return View();
         }
 
@@ -98,7 +109,7 @@ namespace MilestoneMotorsWeb.Controllers
 
                 var response = await _service.CreateCar(carDto, GetToken());
 
-                var errors = HandleErrors(
+                var error = HandleErrors(
                     response,
                     new FailureResponse
                     {
@@ -108,7 +119,12 @@ namespace MilestoneMotorsWeb.Controllers
                     }
                 );
 
-                if (errors == null && response.Body != null)
+                if (error != null)
+                {
+                    return error;
+                }
+
+                if (response.Body != null)
                 {
                     var imageServiceDto = ConvertFromJson<ImageServiceDto>(response.Body);
                     if (imageServiceDto.ImageServiceDown)
@@ -120,6 +136,7 @@ namespace MilestoneMotorsWeb.Controllers
                     return RedirectToAction(nameof(Index));
                 }
             }
+            TempData["Error"] = "Something went wrong, please try again";
             return View(carVM);
         }
 
@@ -137,12 +154,18 @@ namespace MilestoneMotorsWeb.Controllers
                 }
             );
 
-            if (error == null && response.Body != null)
+            if (error != null)
+            {
+                return error;
+            }
+
+            if (response.Body != null)
             {
                 var dto = ConvertFromJson<EditCarDto>(response.Body);
                 return View(_mapperService.Map<EditCarDto, EditCarViewModel>(dto));
             }
 
+            TempData["Error"] = "Something went wrong, please try again";
             return RedirectToAction(nameof(Index));
         }
 
@@ -166,7 +189,12 @@ namespace MilestoneMotorsWeb.Controllers
                     }
                 );
 
-                if (error == null && response.Body != null)
+                if (error != null)
+                {
+                    return error;
+                }
+
+                if (response.Body != null)
                 {
                     var result = (bool)response.Body;
                     if (!result)
@@ -190,11 +218,13 @@ namespace MilestoneMotorsWeb.Controllers
                 response,
                 new FailureResponse { StatusCode = 404, ErrorMessage = "Not Found", }
             );
-            if (error == null)
+
+            if (error != null)
             {
-                TempData["Success"] = "Listing successfully deleted.";
-                return RedirectToAction(nameof(Index));
+                return error;
             }
+
+            TempData["Success"] = "Listing successfully deleted.";
             return RedirectToAction(nameof(Index));
         }
 

@@ -48,10 +48,9 @@ app.UseStatusCodePagesWithRedirects("/Home/Error?statuscode={0}");
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseSession();
 
 app.UseRouting();
-
-app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();

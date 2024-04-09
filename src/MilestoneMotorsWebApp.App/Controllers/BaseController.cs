@@ -38,39 +38,42 @@ namespace MilestoneMotorsWebApp.App.Controllers
 
         protected IActionResult? HandleErrors(ResponseDTO response, FailureResponse props)
         {
-            if (!response.IsSuccessful && response.StatusCode == 404)
+            if (response != null)
             {
-                return NotFound();
-            }
-
-            if (!response.IsSuccessful && response.ErrorList != null)
-            {
-                foreach (var error in response.ErrorList)
+                if (!response.IsSuccessful && response.StatusCode == 404)
                 {
-                    TempData["Error"] = error;
+                    return NotFound();
                 }
 
-                if (props.ViewModel == null)
+                if (!response.IsSuccessful && response.ErrorList != null)
                 {
-                    return RedirectToAction("Index", "Home");
+                    foreach (var error in response.ErrorList)
+                    {
+                        TempData["Error"] = error;
+                    }
+
+                    if (props.ViewModel == null)
+                    {
+                        return RedirectToAction("Index", "Home");
+                    }
+
+                    return View(props.ViewModel);
                 }
 
-                return View(props.ViewModel);
-            }
-
-            if (!response.IsSuccessful && response.StatusCode == 401)
-            {
-                return Unauthorized();
-            }
-
-            if (!response.IsSuccessful && response.StatusCode == props.StatusCode)
-            {
-                TempData["Error"] = props.ErrorMessage;
-                if (props.ViewModel == null)
+                if (!response.IsSuccessful && response.StatusCode == 401)
                 {
-                    return RedirectToAction("Login", "Account");
+                    return Unauthorized();
                 }
-                return View(props.ViewModel);
+
+                if (!response.IsSuccessful && response.StatusCode == props.StatusCode)
+                {
+                    TempData["Error"] = props.ErrorMessage;
+                    if (props.ViewModel == null)
+                    {
+                        return RedirectToAction("Login", "Account");
+                    }
+                    return View(props.ViewModel);
+                }
             }
 
             return null;
