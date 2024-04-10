@@ -48,6 +48,16 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
             return await _db.Cars.Where(c => c.UserId == userId).ToListAsync();
         }
 
+        public async Task<string?> GetUserProfilePictureAsync(string userId)
+        {
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user != null)
+            {
+                return user.ProfilePictureImageUrl;
+            }
+            return null;
+        }
+
         public async Task<bool> Save()
         {
             var result = await _db.SaveChangesAsync();

@@ -2,35 +2,62 @@
 using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Controllers;
 using MilestoneMotorsWebApp.App.Interfaces;
+using MilestoneMotorsWebApp.App.Models;
 using MilestoneMotorsWebApp.App.ViewModels;
+using MilestoneMotorsWebApp.Business.DTO;
+using MilestoneMotorsWebApp.Domain.Entities;
 
 namespace MilestoneMotorsWeb.Controllers
 {
-    public class UserController(IUserService userService)
-        : BaseController<IUserService>(userService)
+    public class UserController(IUserService userService, IMvcMapperService mvcMapperService)
+        : BaseController<IUserService>(userService, mvcMapperService)
     {
         [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> Detail(string? id)
         {
-            var result = await _service.GetUserDetail(id);
-            if (result == null)
+            var response = await _service.GetUserDetail(id, GetToken());
+            var error = HandleErrors(response, new());
+
+            if (error != null)
             {
-                return NotFound();
+                return error;
             }
-            return View(result);
+
+            if (response.Body != null)
+            {
+                return View(
+                    _mapperService.Map<UserDto, UserAccountViewModel>(
+                        ConvertFromJson<UserDto>(response.Body)
+                    )
+                );
+            }
+            TempData["Error"] = "Something went wrong, please try again";
+            return RedirectToAction("Index", "Home");
         }
 
         [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> EditPage(string? id)
         {
-            var result = await _service.GetUserEdit(id);
+            var response = await _service.GetUserEdit(id, GetToken());
 
-            if (result == null)
+            var error = HandleErrors(response, new());
+
+            if (error != null)
             {
-                return NotFound();
+                return error;
             }
 
-            return View(result);
+            if (response.Body != null)
+            {
+                return View(
+                    _mapperService.Map<EditUserDto, EditUserViewModel>(
+                        ConvertFromJson<EditUserDto>(response.Body)
+                    )
+                );
+            }
+
+            TempData["Error"] = "Something went wrong, please try again";
+            return RedirectToAction("Index", "Home");
         }
 
         [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
@@ -39,34 +66,36 @@ namespace MilestoneMotorsWeb.Controllers
         {
             if (ModelState.IsValid)
             {
-                var userId = GetUserId();
-                var editUserFeedback = await _service.PostUserEdit(userId, editVM);
+                var editDto = _mapperService.Map<EditUserViewModel, EditUserDto>(editVM);
+                editDto.Id = GetUserId();
+                editDto.ImageContentType = editVM.ProfilePictureImageUrl?.ContentType ?? "";
+                var response = await _service.PostUserEdit(editDto, GetToken());
 
-                if (editUserFeedback == null)
+                var error = HandleErrors(
+                    response,
+                    new FailureResponse
+                    {
+                        StatusCode = 400,
+                        ErrorMessage = "Error! Please re-do the form.",
+                        ViewModel = editVM
+                    }
+                );
+
+                if (error != null)
                 {
-                    TempData["Error"] = "Something went wrong, please try again.";
-                    return RedirectToAction("Detail", "User", new { id = userId });
+                    return error;
                 }
 
-                if (editUserFeedback.IsImageServiceDown)
+                if (response.Body != null)
                 {
-                    TempData["Error"] = "Image upload service is down.";
-                }
-
-                if (!editUserFeedback.IsAuthorized)
-                {
-                    return Unauthorized();
-                }
-
-                if (!editUserFeedback.HasFailed)
-                {
+                    var editUserFeedbackDto = ConvertFromJson<EditUserFeedbackDto>(response.Body);
+                    if (editUserFeedbackDto.IsImageServiceDown)
+                    {
+                        TempData["Error"] =
+                            "Image service is currently down, please try again later.";
+                    }
                     TempData["Success"] = "Successfully updated profile.";
-                    return RedirectToAction("Detail", "User", new { id = userId });
-                }
-                else
-                {
-                    TempData["Error"] = "Something went wrong, please try again.";
-                    return RedirectToAction("Detail", "User", new { id = userId });
+                    return RedirectToAction("Detail", "User", new { id = GetUserId() });
                 }
             }
             return View(editVM);
@@ -75,15 +104,23 @@ namespace MilestoneMotorsWeb.Controllers
         [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> MyListings()
         {
-            var userId = GetUserId();
-            var result = await _service.GetUserCars(userId);
+            var response = await _service.GetUserCars(GetUserId(), GetToken());
 
-            if (result == null)
+            var error = HandleErrors(response, new());
+
+            if (error != null)
             {
-                return NotFound();
+                return error;
             }
 
-            return View(result);
+            if (response.Body != null)
+            {
+                return View(
+                    new GetUserCarsViewModel { Cars = ConvertFromJson<List<CarDto>>(response.Body) }
+                );
+            }
+            TempData["Error"] = "Something went wrong, please try again";
+            return RedirectToAction("Index", "Home");
         }
 
         [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
@@ -91,26 +128,33 @@ namespace MilestoneMotorsWeb.Controllers
         [Route("User/DeleteUser")]
         public async Task<IActionResult> DeleteUser()
         {
-            var userId = GetUserId();
-            var response = await _service.DeleteUser(userId);
+            var response = await _service.DeleteUser(GetUserId(), GetToken());
 
-            if (response == null)
+            var error = HandleErrors(response, new());
+
+            if (error != null)
             {
-                return NotFound();
+                return error;
             }
 
-            if (response.IsSuccessStatusCode)
+            if (response.Body != null)
             {
-                HttpContext.Session.Remove("JwtToken");
-                TempData["Success"] = "Account successfully deleted.";
-                return RedirectToAction("Index", "Home");
+                var result = (bool)response.Body;
+                if (!result)
+                {
+                    TempData["Error"] =
+                        "Something went wrong while deleting your account, please try again later.";
+                    return RedirectToAction("Detail", "User", new { id = GetUserId() });
+                }
+                else
+                {
+                    HttpContext.Session.Remove("JwtToken");
+                    TempData["Success"] = "Account successfully deleted.";
+                    return RedirectToAction("Index", "Home");
+                }
             }
-            else
-            {
-                TempData["Error"] =
-                    "Something went wrong while deleting your account, please try again later.";
-                return RedirectToAction("Detail", "User", new { userId });
-            }
+            TempData["Error"] = "Something went wrong, please try again";
+            return RedirectToAction("Index", "Home");
         }
     }
 }

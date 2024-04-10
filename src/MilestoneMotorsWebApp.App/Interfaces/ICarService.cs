@@ -7,7 +7,7 @@ namespace MilestoneMotorsWebApp.App.Interfaces
 {
     public interface ICarService
     {
-        Task<IPagedList<Car>?> GetAllCars(
+        Task<ResponseDTO> GetAllCars(
             string search,
             string orderBy,
             string fuelType,
@@ -15,14 +15,10 @@ namespace MilestoneMotorsWebApp.App.Interfaces
             string brand,
             int? page
         );
-        Task<Car?> GetCarDetail(int? id);
-        Task<ImageServiceDto?> CreateCar(
-            CreateCarViewModel carVM,
-            Func<object> onImageServiceDown,
-            Func<object> onDbNotSuccessful
-        );
-        Task<EditCarViewModel?> GetEditCar(int? id);
-        Task<bool?> PostEditCar(int? id, EditCarViewModel editCarVM);
-        Task<bool?> DeleteCar(int? id);
+        Task<ResponseDTO> GetCarDetail(int? id, string? token);
+        Task<ResponseDTO> CreateCar(CreateCarDto createCarDto, string? token);
+        Task<ResponseDTO> GetEditCar(int? id, string? token);
+        Task<ResponseDTO> PostEditCar(int? id, EditCarDto editCarDto, string? token);
+        Task<ResponseDTO> DeleteCar(int? id, string? token);
     }
 }

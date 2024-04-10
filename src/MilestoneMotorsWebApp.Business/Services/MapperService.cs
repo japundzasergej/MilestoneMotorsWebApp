@@ -14,6 +14,7 @@ namespace MilestoneMotorsWebApp.Business.Services
         {
             var configuration = new MapperConfiguration(cfg =>
             {
+                cfg.CreateMap<Car, CarDto>().ReverseMap();
                 cfg.CreateMap<CreateCarDto, Car>();
 
                 cfg.CreateMap<Car, EditCarDto>()
@@ -45,6 +46,7 @@ namespace MilestoneMotorsWebApp.Business.Services
                         dest => dest.EnginePower,
                         opt => opt.MapFrom(src => $"{src.EnginePower} (kW/hP) ")
                     );
+                cfg.CreateMap<User, UserDto>().ReverseMap();
                 cfg.CreateMap<User, EditUserDto>()
                     .ForMember(dest => dest.ProfilePictureImageUrl, opt => opt.Ignore());
             });

@@ -4,7 +4,7 @@ using MilestoneMotorsWebApp.Business.DTO;
 
 namespace MilestoneMotorsWebApp.Business.Accounts.Commands
 {
-    public class RegisterUserCommand : IRequest<RegisterUserFeedbackDto>
+    public class RegisterUserCommand : IRequest<ResponseDTO>
     {
         [FromBody]
         public RegisterUserDto RegisterUserDto { get; set; }

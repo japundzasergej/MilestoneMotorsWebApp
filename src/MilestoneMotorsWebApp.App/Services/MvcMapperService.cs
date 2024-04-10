@@ -92,9 +92,10 @@ namespace MilestoneMotorsWebApp.App.Services
 
                 cfg.CreateMap<EditCarViewModel, EditCarDto>()
                     .ForMember(dest => dest.UserId, opt => opt.Ignore());
-                cfg.CreateMap<RegisterUserViewModel, RegisterUserDto>();
-                cfg.CreateMap<LoginUserViewModel, LoginUserDto>();
+                cfg.CreateMap<RegisterUserViewModel, RegisterUserDto>().ReverseMap();
+                cfg.CreateMap<LoginUserViewModel, LoginUserDto>().ReverseMap();
                 cfg.CreateMap<EditUserDto, EditUserViewModel>();
+                cfg.CreateMap<UserDto, UserAccountViewModel>();
                 cfg.CreateMap<EditUserViewModel, EditUserDto>()
                     .ForMember(
                         dest => dest.ProfilePictureImageUrl,

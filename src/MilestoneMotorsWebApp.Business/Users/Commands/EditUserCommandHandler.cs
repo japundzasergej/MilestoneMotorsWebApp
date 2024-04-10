@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using MilestoneMotorsWebApp.Business.DTO;
+using MilestoneMotorsWebApp.Business.Helpers;
 using MilestoneMotorsWebApp.Business.Interfaces;
 using MilestoneMotorsWebApp.Business.Utilities;
 using MilestoneMotorsWebApp.Domain.Entities;
@@ -12,13 +13,13 @@ namespace MilestoneMotorsWebApp.Business.Users.Commands
         IUserRepository userRepository,
         IPhotoService photoService,
         UserManager<User> userManager
-    ) : IRequestHandler<EditUserCommand, EditUserFeedbackDto>
+    ) : IRequestHandler<EditUserCommand, ResponseDTO>
     {
         private readonly IUserRepository _userRepository = userRepository;
         private readonly IPhotoService _photoService = photoService;
         private readonly UserManager<User> _userManager = userManager;
 
-        public async Task<EditUserFeedbackDto> Handle(
+        public async Task<ResponseDTO> Handle(
             EditUserCommand request,
             CancellationToken cancellationToken
         )
@@ -26,60 +27,73 @@ namespace MilestoneMotorsWebApp.Business.Users.Commands
             var editDto = request.EditUserDto;
             var id = editDto.Id;
             var contentType = editDto.ImageContentType ?? "";
-            var user = await _userRepository.GetByIdAsync(id);
-            var editFeedbackDto = new EditUserFeedbackDto();
-
-            if (editDto.ProfilePictureImageUrl != null && editDto.ProfilePictureImageUrl.Length > 0)
+            try
             {
-                var photoResult = (string?)
-                    await _photoService.CloudinaryUpload(
-                        editDto.ProfilePictureImageUrl,
-                        contentType
-                    );
+                var user = await _userRepository.GetByIdAsync(id);
+                var editFeedbackDto = new EditUserFeedbackDto();
 
-                if (photoResult == null)
+                if (user == null)
                 {
-                    editFeedbackDto.IsImageServiceDown = true;
+                    return PopulateResponseDto.OnFailure(404);
                 }
 
-                if (!string.IsNullOrEmpty(user.ProfilePictureImageUrl))
+                if (
+                    editDto.ProfilePictureImageUrl != null
+                    && editDto.ProfilePictureImageUrl.Length > 0
+                )
                 {
-                    _ = _photoService.DeletePhotoAsync(user.ProfilePictureImageUrl);
-                }
+                    var photoResult = (string?)
+                        await _photoService.CloudinaryUpload(
+                            editDto.ProfilePictureImageUrl,
+                            contentType
+                        );
 
-                user.ProfilePictureImageUrl = photoResult ?? user.ProfilePictureImageUrl;
-                user.City = editDto?.City?.FirstCharToUpper().Trim() ?? string.Empty;
-                user.State = editDto?.State?.FirstCharToUpper().Trim() ?? string.Empty;
-                user.Country = editDto?.Country?.FirstCharToUpper().Trim() ?? string.Empty;
+                    if (photoResult == null)
+                    {
+                        editFeedbackDto.IsImageServiceDown = true;
+                    }
 
-                var result = await _userManager.UpdateAsync(user);
-                if (result.Succeeded)
-                {
-                    return editFeedbackDto;
+                    if (!string.IsNullOrEmpty(user.ProfilePictureImageUrl))
+                    {
+                        _ = _photoService.DeletePhotoAsync(user.ProfilePictureImageUrl);
+                    }
+
+                    user.ProfilePictureImageUrl = photoResult ?? user.ProfilePictureImageUrl;
+                    user.City = editDto?.City?.FirstCharToUpper().Trim() ?? string.Empty;
+                    user.State = editDto?.State?.FirstCharToUpper().Trim() ?? string.Empty;
+                    user.Country = editDto?.Country?.FirstCharToUpper().Trim() ?? string.Empty;
+
+                    var result = await _userManager.UpdateAsync(user);
+                    if (result.Succeeded)
+                    {
+                        return PopulateResponseDto.OnSuccess(editFeedbackDto, 200);
+                    }
+                    else
+                    {
+                        return PopulateResponseDto.OnFailure(400, result.Errors);
+                    }
                 }
                 else
                 {
-                    editFeedbackDto.HasFailed = true;
-                    return editFeedbackDto;
+                    user.City = editDto?.City?.FirstCharToUpper().Trim() ?? string.Empty;
+                    user.State = editDto?.State?.FirstCharToUpper().Trim() ?? string.Empty;
+                    user.Country = editDto?.Country?.FirstCharToUpper().Trim() ?? string.Empty;
+
+                    var result = await _userManager.UpdateAsync(user);
+
+                    if (result.Succeeded)
+                    {
+                        return PopulateResponseDto.OnSuccess(editFeedbackDto, 200);
+                    }
+                    else
+                    {
+                        return PopulateResponseDto.OnFailure(400, result.Errors);
+                    }
                 }
             }
-            else
+            catch (Exception e)
             {
-                user.City = editDto?.City?.FirstCharToUpper().Trim() ?? string.Empty;
-                user.State = editDto?.State?.FirstCharToUpper().Trim() ?? string.Empty;
-                user.Country = editDto?.Country?.FirstCharToUpper().Trim() ?? string.Empty;
-
-                var result = await _userManager.UpdateAsync(user);
-
-                if (result.Succeeded)
-                {
-                    return editFeedbackDto;
-                }
-                else
-                {
-                    editFeedbackDto.HasFailed = true;
-                    return editFeedbackDto;
-                }
+                return PopulateResponseDto.OnError(e);
             }
         }
     }

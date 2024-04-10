@@ -11,14 +11,14 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
     {
         [HttpPost]
         [Route("login")]
-        public async Task<LoginUserFeedbackDto> Login([FromBody] LoginUserCommand command)
+        public async Task<ResponseDTO> Login([FromBody] LoginUserCommand command)
         {
             return await _mediator.Send(command);
         }
 
         [HttpPost]
         [Route("register")]
-        public async Task<RegisterUserFeedbackDto> Register([FromBody] RegisterUserCommand command)
+        public async Task<ResponseDTO> Register([FromBody] RegisterUserCommand command)
         {
             return await _mediator.Send(command);
         }

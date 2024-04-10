@@ -1,11 +1,12 @@
+using MilestoneMotorsWebApp.App.AppConfig;
 using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.Services;
 using MilestoneMotorsWebApp.Business.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
-var apiUrl = builder.Configuration["ApiUrl"];
-var uriBuilder = new UriBuilder(apiUrl);
+StaticDetails.ApiBase = builder.Configuration["ApiUrl"];
+var uriBuilder = new UriBuilder(StaticDetails.ApiBase);
 
 // Add services to the container.
 builder.Services.AddMemoryCache();
@@ -47,10 +48,9 @@ app.UseStatusCodePagesWithRedirects("/Home/Error?statuscode={0}");
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseSession();
 
 app.UseRouting();
-
-app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();

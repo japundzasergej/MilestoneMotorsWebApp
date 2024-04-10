@@ -6,10 +6,11 @@ namespace MilestoneMotorsWebApp.App.Interfaces
 {
     public interface IUserService
     {
-        Task<User?> GetUserDetail(string? id);
-        Task<EditUserViewModel?> GetUserEdit(string? id);
-        Task<EditUserFeedbackDto?> PostUserEdit(string? id, EditUserViewModel editVM);
-        Task<IEnumerable<Car>?> GetUserCars(string? id);
-        Task<HttpResponseMessage?> DeleteUser(string? id);
+        Task<ResponseDTO> GetUserDetail(string? id, string? token);
+        Task<ResponseDTO> GetUserEdit(string? id, string? token);
+        Task<ResponseDTO> PostUserEdit(EditUserDto dto, string? token);
+        Task<ResponseDTO> GetUserCars(string? id, string? token);
+        Task<ResponseDTO> DeleteUser(string? id, string? token);
+        Task<ResponseDTO> GetProfilePicture(string? id, string? token);
     }
 }

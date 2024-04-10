@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MilestoneMotorsWebApp.Business.Cars.Commands;
 using MilestoneMotorsWebApp.Business.Cars.Queries;
@@ -12,42 +13,46 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
     public class CarsController(IMediator mediator) : BaseController(mediator)
     {
         [HttpGet]
-        public async Task<List<Car>> GetAllCars([FromQuery] GetAllCarsQuery query)
+        public async Task<ResponseDTO> GetAllCars([FromQuery] GetAllCarsQuery query)
         {
             return await _mediator.Send(query);
         }
 
         [HttpGet]
         [Route("{id:int}")]
-        public async Task<Car?> GetSingleCar([FromRoute] GetSingleCarQuery query)
+        public async Task<ResponseDTO> GetSingleCar([FromRoute] GetSingleCarQuery query)
         {
             return await _mediator.Send(query);
         }
 
+        [Authorize]
         [HttpPost]
         [Route("create")]
-        public async Task<ImageServiceDto> CreateCar([FromBody] CreateCarCommand command)
+        public async Task<ResponseDTO> CreateCar([FromBody] CreateCarCommand command)
         {
             return await _mediator.Send(command);
         }
 
+        [Authorize]
         [HttpGet]
         [Route("edit/{id:int}")]
-        public async Task<EditCarDto> GetEditCar([FromRoute] EditCarQuery query)
+        public async Task<ResponseDTO> GetEditCar([FromRoute] EditCarQuery query)
         {
             return await _mediator.Send(query);
         }
 
-        [HttpPost]
+        [Authorize]
+        [HttpPut]
         [Route("edit")]
-        public async Task<bool?> PostEditCar([FromBody] EditCarCommand command)
+        public async Task<ResponseDTO> PostEditCar([FromBody] EditCarCommand command)
         {
             return await _mediator.Send(command);
         }
 
-        [HttpPost]
+        [Authorize]
+        [HttpDelete]
         [Route("delete/{id:int}")]
-        public async Task<bool> DeleteCar([FromRoute] DeleteCarCommand command)
+        public async Task<ResponseDTO> DeleteCar([FromRoute] DeleteCarCommand command)
         {
             return await _mediator.Send(command);
         }

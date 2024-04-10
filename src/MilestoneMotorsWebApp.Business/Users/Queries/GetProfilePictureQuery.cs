@@ -1,11 +1,15 @@
-﻿using MediatR;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Domain.Entities;
 
 namespace MilestoneMotorsWebApp.Business.Users.Queries
 {
-    public class GetUserDetailQuery : IRequest<ResponseDTO>
+    public class GetProfilePictureQuery : IRequest<ResponseDTO>
     {
         [FromRoute]
         public string Id { get; set; }
