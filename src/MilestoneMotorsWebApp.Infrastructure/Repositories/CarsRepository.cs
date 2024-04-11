@@ -8,23 +8,21 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
 {
     public class CarsRepository(ApplicationDbContext db) : ICarsRepository
     {
-        private readonly ApplicationDbContext _db = db;
-
         public async Task<bool> Add(Car car)
         {
-            _db.Add(car);
+            db.Add(car);
             return await Save();
         }
 
         public async Task<bool> Remove(Car car)
         {
-            _db.Remove(car);
+            db.Remove(car);
             return await Save();
         }
 
         public async Task<IEnumerable<Car>> GetAllCarsAsync(string? orderBy)
         {
-            var carList = await _db.Cars.ToListAsync();
+            var carList = await db.Cars.ToListAsync();
 
             if (!string.IsNullOrEmpty(orderBy))
             {
@@ -39,7 +37,7 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
             {
                 return null;
             }
-            var carDetail = await _db.Cars.SingleOrDefaultAsync(c => c.Id == id);
+            var carDetail = await db.Cars.SingleOrDefaultAsync(c => c.Id == id);
             if (carDetail == null)
             {
                 return null;
@@ -49,13 +47,13 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
 
         public async Task<bool> Save()
         {
-            var result = await _db.SaveChangesAsync();
+            var result = await db.SaveChangesAsync();
             return result > 0;
         }
 
         public async Task<bool> Update(Car car)
         {
-            _db.Update(car);
+            db.Update(car);
             return await Save();
         }
 
@@ -65,7 +63,7 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
             {
                 return null;
             }
-            var userCar = await _db.Cars.AsNoTracking().SingleOrDefaultAsync(c => c.Id == id);
+            var userCar = await db.Cars.AsNoTracking().SingleOrDefaultAsync(c => c.Id == id);
             if (userCar == null)
             {
                 return null;
@@ -76,7 +74,7 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
         public async Task<IEnumerable<Car>> SearchCarsAsync(string search, string? orderBy)
         {
             string query = "SELECT * FROM Cars WHERE Brand LIKE {0} OR Model LIKE {0}";
-            var carList = await _db.Cars.FromSqlRaw(query, $"{search}%").ToListAsync();
+            var carList = await db.Cars.FromSqlRaw(query, $"{search}%").ToListAsync();
 
             if (carList.Count == 0)
             {
@@ -104,7 +102,7 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
             if (brand != null)
             {
                 sqlQuery = "SELECT * FROM Cars WHERE Brand = {0}";
-                var carsQuery = _db.Cars.FromSqlRaw(sqlQuery, brand);
+                var carsQuery = db.Cars.FromSqlRaw(sqlQuery, brand);
                 carList = await carsQuery.ToListAsync();
 
                 if (!carList.Any())
@@ -123,7 +121,7 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
             {
                 var selectedFuelType = Enum.Parse<FuelTypes>(fuelType);
                 sqlQuery = "SELECT * FROM Cars WHERE FuelTypes = {0}";
-                var carsQuery = _db.Cars.FromSqlRaw(sqlQuery, selectedFuelType);
+                var carsQuery = db.Cars.FromSqlRaw(sqlQuery, selectedFuelType);
                 carList = await carsQuery.ToListAsync();
 
                 if (!carList.Any())
@@ -142,7 +140,7 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
             {
                 var selectedCondition = Enum.Parse<Condition>(condition);
                 sqlQuery = "SELECT * FROM Cars WHERE Condition = {0}";
-                var carsQuery = _db.Cars.FromSqlRaw(sqlQuery, selectedCondition);
+                var carsQuery = db.Cars.FromSqlRaw(sqlQuery, selectedCondition);
                 carList = await carsQuery.ToListAsync();
 
                 if (!carList.Any())
