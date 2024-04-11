@@ -4,7 +4,7 @@ using MilestoneMotorsWebApp.Domain.Enums;
 
 namespace MilestoneMotorsWebApp.App.ViewModels
 {
-    public class CreateCarViewModel
+    public record CreateCarViewModel
     {
         [Required]
         public Condition Condition { get; set; }
@@ -30,7 +30,7 @@ namespace MilestoneMotorsWebApp.App.ViewModels
         public int ManufacturingYear { get; set; }
 
         [Required]
-        public string Mileage { get; set; }
+        public int Mileage { get; set; }
 
         [Required]
         [DisplayName("Body Type")]
@@ -46,7 +46,7 @@ namespace MilestoneMotorsWebApp.App.ViewModels
 
         [Required]
         [DisplayName("Engine Power")]
-        public string EnginePower { get; set; }
+        public int EnginePower { get; set; }
 
         [Required]
         [DisplayName("Fixed Price")]

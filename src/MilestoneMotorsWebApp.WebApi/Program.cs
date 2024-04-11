@@ -1,64 +1,54 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using MilestoneMotorsWebApp.Business;
-using MilestoneMotorsWebApp.Business.DTO;
+using MilestoneMotorsWebApp.Business.Helpers;
+using MilestoneMotorsWebApp.Business.Interfaces;
+using MilestoneMotorsWebApp.Business.Mapper;
+using MilestoneMotorsWebApp.Business.Services;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure;
+using MilestoneMotorsWebApp.Infrastructure.Interfaces;
+using MilestoneMotorsWebApp.Infrastructure.Repositories;
+using MilestoneMotorsWebApp.WebApi.Middleware;
 using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 var url = builder.Configuration["JwtSettings:Audience"];
+var connectionString = builder.Configuration.GetConnectionString("DbConnect");
 
 // Add services to the container.
 builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder
     .Services
-    .AddSwaggerGen(c =>
-    {
-        c.SwaggerDoc(
-            "v1",
-            new OpenApiInfo { Title = "MilestoneMotorsWebApp.WebApi", Version = "v1" }
-        );
+    .AddAutoMapper(typeof(CarMapperProfile).Assembly, typeof(UserMapperProfile).Assembly);
+builder.Services.AddScoped<IPhotoService, PhotoService>();
+builder
+    .Services
+    .Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
-        c.AddSecurityDefinition(
-            "Bearer",
-            new OpenApiSecurityScheme
-            {
-                Description = @"Enter 'Bearer' [space] and your token",
-                Name = "Authorization",
-                In = ParameterLocation.Header,
-                Type = SecuritySchemeType.Http,
-                Scheme = "bearer"
-            }
-        );
+builder.Services.AddMediatrInjection();
+builder.Services.AddTransient<GlobalExceptionHandler>();
 
-        c.AddSecurityRequirement(
-            new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        },
-                        Scheme = "bearer",
-                        Name = "Bearer",
-                        In = ParameterLocation.Header
-                    },
-                    new List<string>()
-                }
-            }
-        );
-    });
-builder.Services.AddApiInjection(builder.Configuration);
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICarsRepository, CarsRepository>();
+
+builder
+    .Services
+    .AddDbContext<ApplicationDbContext>(
+        options =>
+            options.UseSqlServer(
+                connectionString,
+                b => b.MigrationsAssembly("MilestoneMotorsWebApp.WebApi")
+            )
+    );
 builder.Services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
 builder
     .Services
@@ -87,10 +77,15 @@ builder
             OnChallenge = context =>
             {
                 context.HandleResponse();
-                context.Response.StatusCode = StatusCodes.Status200OK;
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 context.Response.ContentType = "application/json";
                 var result = JsonConvert.SerializeObject(
-                    new ResponseDTO { IsSuccessful = false, StatusCode = 401 }
+                    new ProblemDetails
+                    {
+                        Title = "Unauthorized",
+                        Detail = "Unauthorized access.",
+                        Status = StatusCodes.Status401Unauthorized
+                    }
                 );
                 return context.Response.WriteAsync(result);
             }
@@ -130,6 +125,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<GlobalExceptionHandler>();
 
 app.UseAuthentication();
 app.UseAuthorization();

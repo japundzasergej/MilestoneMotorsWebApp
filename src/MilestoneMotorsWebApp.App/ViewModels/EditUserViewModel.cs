@@ -2,7 +2,7 @@
 
 namespace MilestoneMotorsWebApp.App.ViewModels
 {
-    public class EditUserViewModel
+    public record EditUserViewModel
     {
         [DisplayName("Change Profile Picture (optional)")]
         public IFormFile? ProfilePictureImageUrl { get; set; }

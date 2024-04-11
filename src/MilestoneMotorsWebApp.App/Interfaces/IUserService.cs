@@ -1,16 +1,14 @@
-﻿using MilestoneMotorsWebApp.App.ViewModels;
-using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Domain.Entities;
+﻿using MilestoneMotorsWebApp.Business.DTO;
 
 namespace MilestoneMotorsWebApp.App.Interfaces
 {
     public interface IUserService
     {
-        Task<ResponseDTO> GetUserDetail(string? id, string? token);
-        Task<ResponseDTO> GetUserEdit(string? id, string? token);
-        Task<ResponseDTO> PostUserEdit(EditUserDto dto, string? token);
-        Task<ResponseDTO> GetUserCars(string? id, string? token);
-        Task<ResponseDTO> DeleteUser(string? id, string? token);
-        Task<ResponseDTO> GetProfilePicture(string? id, string? token);
+        Task<UserDto> GetUserDetail(string? id, string? token);
+        Task<EditUserDto> GetUserEdit(string? id, string? token);
+        Task<EditUserFeedbackDto> PostUserEdit(EditUserDto dto, string? token);
+        Task<List<CarDto>> GetUserCars(string? id, string? token);
+        Task<bool> DeleteUser(string? id, string? token);
+        Task<string> GetProfilePicture(string? id, string? token);
     }
 }

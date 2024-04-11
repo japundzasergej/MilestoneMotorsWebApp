@@ -4,33 +4,30 @@ using MilestoneMotorsWebApp.Domain.Enums;
 
 namespace MilestoneMotorsWebApp.Domain.Entities
 {
-    public class Car
+    public record Car
     {
         [Key]
         public int Id { get; set; }
-
-        public Condition Condition { get; set; }
-
-        public Brand Brand { get; set; }
-
-        public string Description { get; set; }
-        public string Price { get; set; }
-        public string Model { get; set; }
-        public int ManufacturingYear { get; set; }
-        public string Mileage { get; set; }
-        public BodyTypes BodyTypes { get; set; }
-        public FuelTypes FuelTypes { get; set; }
-        public string EngineCapacity { get; set; }
-        public string EnginePower { get; set; }
-        public YesOrNo FixedPrice { get; set; }
-        public YesOrNo Exchange { get; set; }
+        public Condition Condition { get; init; }
+        public Brand Brand { get; init; }
+        public string Description { get; init; }
+        public double Price { get; init; }
+        public string Model { get; init; }
+        public int ManufacturingYear { get; init; }
+        public int Mileage { get; init; }
+        public BodyTypes BodyTypes { get; init; }
+        public FuelTypes FuelTypes { get; init; }
+        public int EngineCapacity { get; init; }
+        public int EnginePower { get; init; }
+        public YesOrNo FixedPrice { get; init; }
+        public YesOrNo Exchange { get; init; }
         public string? HeadlinerImageUrl { get; set; }
         public List<string>? ImagesUrl { get; set; }
         public string? AdNumber { get; set; }
         public DateTime CreatedAt { get; set; }
 
         [ForeignKey("User")]
-        public string? UserId { get; set; }
-        public User? User { get; set; }
+        public string? UserId { get; init; }
+        public User? User { get; init; }
     }
 }

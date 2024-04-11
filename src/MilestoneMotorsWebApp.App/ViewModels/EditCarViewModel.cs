@@ -4,7 +4,7 @@ using MilestoneMotorsWebApp.Domain.Enums;
 
 namespace MilestoneMotorsWebApp.App.ViewModels
 {
-    public class EditCarViewModel
+    public record EditCarViewModel
     {
         [Required]
         public Condition Condition { get; set; }

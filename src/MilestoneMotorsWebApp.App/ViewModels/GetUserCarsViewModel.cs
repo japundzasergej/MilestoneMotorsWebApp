@@ -2,8 +2,8 @@
 
 namespace MilestoneMotorsWebApp.App.ViewModels
 {
-    public class GetUserCarsViewModel
+    public record GetUserCarsViewModel
     {
-        public List<CarDto> Cars { get; set; }
+        public List<CarDto> Cars { get; init; }
     }
 }

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MilestoneMotorsWebApp.App.ViewModels
 {
-    public class RegisterUserViewModel
+    public record RegisterUserViewModel
     {
         [Required]
         public string Username { get; set; }

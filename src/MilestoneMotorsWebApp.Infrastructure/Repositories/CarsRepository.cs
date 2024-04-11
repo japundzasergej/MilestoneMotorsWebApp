@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MilestoneMotorsWebApp.Business.Cars.Helpers;
 using MilestoneMotorsWebApp.Domain.Entities;
+using MilestoneMotorsWebApp.Domain.Enums;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
 
 namespace MilestoneMotorsWebApp.Infrastructure.Repositories
@@ -20,9 +22,15 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
             return await Save();
         }
 
-        public async Task<IEnumerable<Car>> GetAllCarsAsync()
+        public async Task<IEnumerable<Car>> GetAllCarsAsync(string? orderBy)
         {
-            return await _db.Cars.ToListAsync();
+            var carList = await _db.Cars.ToListAsync();
+
+            if (!string.IsNullOrEmpty(orderBy))
+            {
+                carList = OrderCars.Filter(carList, orderBy);
+            }
+            return carList;
         }
 
         public async Task<Car?> GetCarByIdAsync(int? id)
@@ -63,6 +71,93 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
                 return null;
             }
             return userCar;
+        }
+
+        public async Task<IEnumerable<Car>> SearchCarsAsync(string search, string? orderBy)
+        {
+            string query = "SELECT * FROM Cars WHERE Brand LIKE {0} OR Model LIKE {0}";
+            var carList = await _db.Cars.FromSqlRaw(query, $"{search}%").ToListAsync();
+
+            if (carList.Count == 0)
+            {
+                return [ ];
+            }
+
+            if (!string.IsNullOrEmpty(orderBy))
+            {
+                carList = OrderCars.Filter(carList, orderBy);
+            }
+
+            return carList;
+        }
+
+        public async Task<IEnumerable<Car>> FilteredCarsAsync(
+            string? brand,
+            string? fuelType,
+            string? condition,
+            string? orderBy
+        )
+        {
+            IEnumerable<Car> carList =  [ ];
+            string sqlQuery;
+
+            if (brand != null)
+            {
+                sqlQuery = "SELECT * FROM Cars WHERE Brand = {0}";
+                var carsQuery = _db.Cars.FromSqlRaw(sqlQuery, brand);
+                carList = await carsQuery.ToListAsync();
+
+                if (!carList.Any())
+                {
+                    return [ ];
+                }
+
+                if (!string.IsNullOrEmpty(orderBy))
+                {
+                    carList = OrderCars.Filter(carList.ToList(), orderBy);
+                }
+
+                return carList;
+            }
+            else if (fuelType != null)
+            {
+                var selectedFuelType = Enum.Parse<FuelTypes>(fuelType);
+                sqlQuery = "SELECT * FROM Cars WHERE FuelTypes = {0}";
+                var carsQuery = _db.Cars.FromSqlRaw(sqlQuery, selectedFuelType);
+                carList = await carsQuery.ToListAsync();
+
+                if (!carList.Any())
+                {
+                    return [ ];
+                }
+
+                if (!string.IsNullOrEmpty(orderBy))
+                {
+                    carList = OrderCars.Filter(carList.ToList(), orderBy);
+                }
+
+                return carList;
+            }
+            else if (condition != null)
+            {
+                var selectedCondition = Enum.Parse<Condition>(condition);
+                sqlQuery = "SELECT * FROM Cars WHERE Condition = {0}";
+                var carsQuery = _db.Cars.FromSqlRaw(sqlQuery, selectedCondition);
+                carList = await carsQuery.ToListAsync();
+
+                if (!carList.Any())
+                {
+                    return [ ];
+                }
+
+                if (!string.IsNullOrEmpty(orderBy))
+                {
+                    carList = OrderCars.Filter(carList.ToList(), orderBy);
+                }
+
+                return carList;
+            }
+            return carList;
         }
     }
 }

@@ -1,48 +1,23 @@
-﻿using MediatR;
+﻿using AutoMapper;
+using MediatR;
 using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Business.Helpers;
-using MilestoneMotorsWebApp.Business.Interfaces;
-using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
 
 namespace MilestoneMotorsWebApp.Business.Users.Queries
 {
-    public class GetUserCarsQueryHandler(
-        IUserRepository userRepository,
-        IMapperService mapperService
-    ) : IRequestHandler<GetUserCarsQuery, ResponseDTO>
+    public class GetUserCarsQueryHandler(IUserRepository userRepository, IMapper mapper)
+        : IRequestHandler<GetUserCarsQuery, IEnumerable<CarDto>>
     {
-        private readonly IUserRepository _userRepository = userRepository;
-        private readonly IMapperService _mapperService = mapperService;
-
-        public async Task<ResponseDTO> Handle(
+        public async Task<IEnumerable<CarDto>> Handle(
             GetUserCarsQuery request,
             CancellationToken cancellationToken
         )
         {
-            var id = request.Id;
+            var result =
+                await userRepository.GetUserCarsAsync(request.Id)
+                ?? throw new InvalidDataException("Object doesn't exist");
 
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                return PopulateResponseDto.OnFailure(404);
-            }
-
-            try
-            {
-                var result = await _userRepository.GetUserCarsAsync(id);
-                if (result == null)
-                {
-                    return PopulateResponseDto.OnFailure(404);
-                }
-                return PopulateResponseDto.OnSuccess(
-                    result.Select(_mapperService.Map<Car, CarDto>),
-                    200
-                );
-            }
-            catch (Exception e)
-            {
-                return PopulateResponseDto.OnError(e);
-            }
+            return result.Select(mapper.Map<CarDto>);
         }
     }
 }

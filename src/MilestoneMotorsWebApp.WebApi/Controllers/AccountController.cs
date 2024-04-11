@@ -7,20 +7,22 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AccountController(IMediator mediator) : BaseController(mediator)
+    public class AccountController(IMediator mediator) : Controller
     {
         [HttpPost]
         [Route("login")]
-        public async Task<ResponseDTO> Login([FromBody] LoginUserCommand command)
+        public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
         {
-            return await _mediator.Send(command);
+            var response = await mediator.Send(new LoginUserCommand { LoginUserDto = dto });
+            return Ok(response);
         }
 
         [HttpPost]
         [Route("register")]
-        public async Task<ResponseDTO> Register([FromBody] RegisterUserCommand command)
+        public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
         {
-            return await _mediator.Send(command);
+            var response = await mediator.Send(new RegisterUserCommand { RegisterUserDto = dto });
+            return Ok(response);
         }
     }
 }

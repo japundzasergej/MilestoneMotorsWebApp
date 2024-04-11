@@ -2,7 +2,7 @@
 
 namespace MilestoneMotorsWebApp.App.ViewModels
 {
-    public class LoginUserViewModel
+    public record LoginUserViewModel
     {
         [Required]
         public string Email { get; set; }

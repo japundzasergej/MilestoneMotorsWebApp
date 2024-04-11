@@ -1,16 +1,14 @@
-﻿using MilestoneMotorsWebApp.Domain.Entities;
-
-namespace MilestoneMotorsWebApp.Business.DTO
+﻿namespace MilestoneMotorsWebApp.Business.DTO
 {
-    public class UserDto
+    public record UserDto
     {
-        public string Id { get; set; }
-        public string UserName { get; set; }
-        public string Email { get; set; }
-        public string? ProfilePictureImageUrl { get; set; }
-        public string? Country { get; set; }
-        public string? City { get; set; }
-        public string? State { get; set; }
-        public List<CarDto> MyListings { get; set; }
+        public string Id { get; init; }
+        public string UserName { get; init; }
+        public string Email { get; init; }
+        public string? ProfilePictureImageUrl { get; init; }
+        public string? Country { get; init; }
+        public string? City { get; init; }
+        public string? State { get; init; }
+        public List<CarDto> MyListings { get; init; }
     }
 }

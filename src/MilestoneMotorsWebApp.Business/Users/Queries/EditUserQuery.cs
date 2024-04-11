@@ -4,7 +4,7 @@ using MilestoneMotorsWebApp.Business.DTO;
 
 namespace MilestoneMotorsWebApp.Business.Users.Queries
 {
-    public class EditUserQuery : IRequest<ResponseDTO>
+    public class EditUserQuery : IRequest<EditUserDto>
     {
         [FromRoute]
         public string Id { get; set; }

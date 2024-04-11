@@ -1,35 +1,31 @@
-﻿using System.Text;
-using MilestoneMotorsWebApp.App.AppConfig;
+﻿using MilestoneMotorsWebApp.App.AppConfig;
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.Models;
-using MilestoneMotorsWebApp.App.ViewModels;
 using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Business.Utilities;
-using Newtonsoft.Json;
 
 namespace MilestoneMotorsWebApp.App.Services
 {
     public class AccountService(HttpClient httpClient) : BaseService(httpClient), IAccountService
     {
-        public async Task<ResponseDTO> LoginUser(LoginUserDto dto)
+        public async Task<LoginUserFeedbackDto> LoginUser(LoginUserDto dto)
         {
-            return await SendAsync(
+            return await SendAsync<LoginUserFeedbackDto>(
                 new ApiRequest
                 {
                     Url = GetUri("/login"),
-                    Data = new { LoginUserDto = dto },
+                    Data = dto,
                     MethodType = StaticDetails.MethodType.POST,
                 }
             );
         }
 
-        public async Task<ResponseDTO> RegisterUser(RegisterUserDto dto)
+        public async Task<RegisterUserFeedbackDto> RegisterUser(RegisterUserDto dto)
         {
-            return await SendAsync(
+            return await SendAsync<RegisterUserFeedbackDto>(
                 new ApiRequest
                 {
                     Url = GetUri("/register"),
-                    Data = new { RegisterUserDto = dto },
+                    Data = dto,
                     MethodType = StaticDetails.MethodType.POST,
                 }
             );
