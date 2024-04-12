@@ -38,6 +38,20 @@ namespace MilestoneMotorsWebApp.WebApi.Middleware
                         )
                     );
             }
+            catch (UnauthorizedAccessException e)
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                await context
+                    .Response
+                    .WriteAsync(
+                        SerializeProblem.HandleException(
+                            e,
+                            "Unauthorized",
+                            StatusCodes.Status401Unauthorized
+                        )
+                    );
+            }
             catch (Exception e)
             {
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;

@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Controllers;
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.ViewModels;
@@ -10,7 +9,6 @@ namespace MilestoneMotorsWeb.Controllers
 {
     public class UserController(IUserService userService, IMapper mapper) : BaseController
     {
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> Detail(string? id)
         {
             var response = await userService.GetUserDetail(id, GetToken());
@@ -18,7 +16,6 @@ namespace MilestoneMotorsWeb.Controllers
             return View(mapper.Map<UserAccountViewModel>(response));
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> EditPage(string? id)
         {
             var response = await userService.GetUserEdit(id, GetToken());
@@ -26,7 +23,6 @@ namespace MilestoneMotorsWeb.Controllers
             return View(mapper.Map<EditUserViewModel>(response));
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         public async Task<IActionResult> EditPage(EditUserViewModel editVM)
         {
@@ -47,7 +43,6 @@ namespace MilestoneMotorsWeb.Controllers
             return View(editVM);
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> MyListings()
         {
             var response = await userService.GetUserCars(GetUserId(), GetToken());
@@ -55,7 +50,6 @@ namespace MilestoneMotorsWeb.Controllers
             return View(new GetUserCarsViewModel { Cars = response });
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         [Route("User/DeleteUser")]
         public async Task<IActionResult> DeleteUser()

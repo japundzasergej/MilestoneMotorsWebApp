@@ -11,6 +11,7 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
     [Route("api/[controller]")]
     public class CarsController(IMediator mediator) : Controller
     {
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetAllCars(
             [FromQuery] string? search,
@@ -33,6 +34,7 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
             return Ok(response);
         }
 
+        [AllowAnonymous]
         [HttpGet]
         [Route("{id:int}")]
         public async Task<IActionResult> GetSingleCar([FromRoute] int id)
@@ -41,7 +43,6 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
             return Ok(response);
         }
 
-        [Authorize]
         [HttpPost]
         [Route("create")]
         public async Task<IActionResult> CreateCar([FromBody] CreateCarDto dto)
@@ -50,7 +51,6 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
             return Ok(response);
         }
 
-        [Authorize]
         [HttpGet]
         [Route("edit/{id:int}")]
         public async Task<IActionResult> GetEditCar([FromRoute] int id)
@@ -59,7 +59,6 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
             return Ok(response);
         }
 
-        [Authorize]
         [HttpPut]
         [Route("edit")]
         public async Task<IActionResult> PostEditCar([FromBody] EditCarDto dto)
@@ -68,7 +67,6 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
             return Ok(response);
         }
 
-        [Authorize]
         [HttpDelete]
         [Route("delete/{id:int}")]
         public async Task<IActionResult> DeleteCar([FromRoute] int id)

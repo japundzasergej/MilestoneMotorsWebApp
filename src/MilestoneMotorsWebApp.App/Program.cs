@@ -1,5 +1,4 @@
 using MilestoneMotorsWebApp.App.AppConfig;
-using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.Mapper;
 using MilestoneMotorsWebApp.App.Middleware;
@@ -16,6 +15,7 @@ builder.Services.AddSession();
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<GlobalExceptionHandler>();
+builder.Services.AddTransient<JwtMiddleware>();
 builder
     .Services
     .AddAutoMapper(typeof(CarMapperProfile).Assembly, typeof(UserMapperProfile).Assembly);
@@ -38,7 +38,6 @@ builder
         client.BaseAddress = uriBuilder.Uri.ExtendPath("account");
     });
 
-builder.Services.AddScoped<JwtSessionAuthenticationAttribute>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -56,8 +55,7 @@ app.UseSession();
 
 app.UseRouting();
 
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseMiddleware<JwtMiddleware>();
 
 app.UseAntiforgery();
 

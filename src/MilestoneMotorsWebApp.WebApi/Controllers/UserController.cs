@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MilestoneMotorsWebApp.Business.DTO;
 using MilestoneMotorsWebApp.Business.Users.Commands;
@@ -11,7 +10,6 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
     [Route("api/[controller]")]
     public class UserController(IMediator mediator) : Controller
     {
-        [Authorize]
         [HttpGet]
         [Route("{id}")]
         public async Task<IActionResult> GetUserDetail([FromRoute] string id)
@@ -20,7 +18,6 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
             return Ok(response);
         }
 
-        [Authorize]
         [HttpGet]
         [Route("edit/{id}")]
         public async Task<IActionResult> GetEditUser([FromRoute] string id)
@@ -29,7 +26,6 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
             return Ok(response);
         }
 
-        [Authorize]
         [HttpPut]
         [Route("edit")]
         public async Task<IActionResult> PostEditUser([FromBody] EditUserDto dto)
@@ -38,7 +34,6 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
             return Ok(response);
         }
 
-        [Authorize]
         [HttpGet]
         [Route("userCars/{id}")]
         public async Task<IActionResult> GetUserCars([FromRoute] string id)
@@ -47,7 +42,6 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
             return Ok(response);
         }
 
-        [Authorize]
         [HttpDelete]
         [Route("delete/{id}")]
         public async Task<IActionResult> DeleteUser([FromRoute] string id)

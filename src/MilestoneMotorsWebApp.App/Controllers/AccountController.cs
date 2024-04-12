@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Controllers;
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.ViewModels;
@@ -11,6 +11,7 @@ namespace MilestoneMotorsWeb.Controllers
 {
     public class AccountController(IAccountService accountService, IMapper mapper) : BaseController
     {
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult Register()
         {
@@ -23,6 +24,7 @@ namespace MilestoneMotorsWeb.Controllers
             return View(new RegisterUserViewModel());
         }
 
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> Register(RegisterUserViewModel registerVM)
         {
@@ -52,6 +54,7 @@ namespace MilestoneMotorsWeb.Controllers
             return View(registerVM);
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult Login()
         {
@@ -63,6 +66,7 @@ namespace MilestoneMotorsWeb.Controllers
             return View(new LoginUserViewModel());
         }
 
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> Login(LoginUserViewModel loginVM)
         {
@@ -95,7 +99,6 @@ namespace MilestoneMotorsWeb.Controllers
             return View(loginVM);
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpGet]
         public async Task<IActionResult> Logout()
         {

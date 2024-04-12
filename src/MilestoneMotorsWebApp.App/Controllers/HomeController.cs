@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Controllers;
 using MilestoneMotorsWebApp.App.Helpers;
 using MilestoneMotorsWebApp.App.Interfaces;
@@ -14,6 +14,7 @@ namespace MilestoneMotorsWeb.Controllers
 {
     public class HomeController(ICarService carService, IMapper mapper) : BaseController
     {
+        [AllowAnonymous]
         public async Task<IActionResult> Index(
             string search,
             string orderBy,
@@ -38,6 +39,7 @@ namespace MilestoneMotorsWeb.Controllers
             return View(new GetCarsViewModel { Cars = response.ToPagedList(pageNumber, pageSize) });
         }
 
+        [AllowAnonymous]
         public async Task<IActionResult> Detail(int? id)
         {
             var response = await carService.GetCarDetail(id);
@@ -45,13 +47,11 @@ namespace MilestoneMotorsWeb.Controllers
             return View(mapper.Map<GetCarViewModel>(response));
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public IActionResult Create()
         {
             return View(new CreateCarViewModel { UserId = GetUserId() });
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         public async Task<IActionResult> Create(CreateCarViewModel carVM)
         {
@@ -86,7 +86,6 @@ namespace MilestoneMotorsWeb.Controllers
             return View(carVM);
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> Edit(int? id)
         {
             var response = await carService.GetEditCar(id, GetToken());
@@ -94,7 +93,6 @@ namespace MilestoneMotorsWeb.Controllers
             return View(mapper.Map<EditCarViewModel>(response));
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         public async Task<IActionResult> Edit(int? id, EditCarViewModel editCarVM)
         {
@@ -122,7 +120,6 @@ namespace MilestoneMotorsWeb.Controllers
             return View(editCarVM);
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         public async Task<IActionResult> Delete(int? id)
         {
@@ -138,13 +135,13 @@ namespace MilestoneMotorsWeb.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public IActionResult SendMessage()
         {
             TempData["Success"] = "Message sent successfully!";
             return Ok();
         }
 
+        [AllowAnonymous]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error(int statuscode)
         {
