@@ -66,10 +66,10 @@
                 <a id="clearFiltersButton" href="@Url.Action("Index", new {
                     search = ViewBag.Search,
                     page = ViewBag.Page,
-                    orderBy = (string)null,
-                    fuelType = (string)null, 
-                    condition = (string)null,
-                    brand = (string)null})" class="btn btn-outline-danger">
+                    orderBy = "",
+                    fuelType = "", 
+                    condition = "",
+                    brand = ""})" class="btn btn-outline-danger">
                     <i class="fas fa-times"></i>
                     &nbsp;Clear filters
                 </a>
@@ -84,7 +84,7 @@
                                     <div class="d-flex flex-column text-center">
                                         @foreach (var c in Enum.GetValues(typeof(FuelTypes)))
                                         {
-                                            <a class="filter-link" href="@Url.Action("Index", new { fuelType = c, search = ViewBag.Search, orderBy = ViewBag.OrderBy, page = (string)null })">
+                                            <a class="filter-link" href="@Url.Action("Index", new { fuelType = c, search = "", orderBy = ViewBag.OrderBy, page = "" })">
                                                 @c.ToString()
                                             </a>
                                             <hr />
@@ -100,7 +100,7 @@
                                     <div class="d-flex flex-column text-center">
                                         @foreach (var c in Enum.GetValues(typeof(Brand)))
                                         {
-                                            <a class="filter-link" href="@Url.Action("Index", new { brand = c, search = ViewBag.Search, orderBy = ViewBag.OrderBy, page = (string)null })">
+                                            <a class="filter-link" href="@Url.Action("Index", new { brand = c, search = "", orderBy = ViewBag.OrderBy, page = (string)null })">
                                                 @c.ToString()
                                             </a>
                                             <hr />
@@ -116,7 +116,7 @@
                                     <div class="d-flex flex-column text-center">
                                         @foreach(var c in Enum.GetValues<Condition>())
                                         {
-                                            <a class="filter-link" href="@Url.Action("Index", new { condition = c, search = ViewBag.Search, orderBy = ViewBag.OrderBy, page = (string)null })">@c.ToString()</a>
+                                            <a class="filter-link" href="@Url.Action("Index", new { condition = c, search = "", orderBy = ViewBag.OrderBy, page = (string)null })">@c.ToString()</a>
                                             <hr>
                                         }
                                     </div>
