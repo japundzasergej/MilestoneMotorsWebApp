@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using MilestoneMotorsWebApp.Business.Cars.Helpers;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Domain.Enums;
@@ -98,67 +99,36 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
             string? orderBy
         )
         {
-            IEnumerable<Car> carList =  [ ];
-            string sqlQuery;
+            var carsQuery = db.Cars.AsQueryable();
 
             if (brand != null)
             {
-                sqlQuery = "SELECT * FROM Cars WHERE Brand = {0}";
-                var carsQuery = db.Cars.FromSqlRaw(sqlQuery, brand);
-
-                if (!string.IsNullOrEmpty(orderBy))
-                {
-                    carsQuery = OrderCars.Filter(carsQuery, orderBy);
-                }
-                carList = await carsQuery.ToListAsync();
-
-                if (!carList.Any())
-                {
-                    return [ ];
-                }
-
-                return carList;
+                var selectedBrand = Enum.Parse<Brand>(brand);
+                carsQuery = carsQuery.Where(c => c.Brand == selectedBrand);
             }
             else if (fuelType != null)
             {
                 var selectedFuelType = Enum.Parse<FuelTypes>(fuelType);
-                sqlQuery = "SELECT * FROM Cars WHERE FuelTypes = {0}";
-                var carsQuery = db.Cars.FromSqlRaw(sqlQuery, selectedFuelType);
-
-                if (!string.IsNullOrEmpty(orderBy))
-                {
-                    carsQuery = OrderCars.Filter(carsQuery, orderBy);
-                }
-
-                carList = await carsQuery.ToListAsync();
-
-                if (!carList.Any())
-                {
-                    return [ ];
-                }
-
-                return carList;
+                carsQuery = carsQuery.Where(c => c.FuelTypes == selectedFuelType);
             }
             else if (condition != null)
             {
                 var selectedCondition = Enum.Parse<Condition>(condition);
-                sqlQuery = "SELECT * FROM Cars WHERE Condition = {0}";
-                var carsQuery = db.Cars.FromSqlRaw(sqlQuery, selectedCondition);
-
-                if (!string.IsNullOrEmpty(orderBy))
-                {
-                    carsQuery = OrderCars.Filter(carsQuery, orderBy);
-                }
-
-                carList = await carsQuery.ToListAsync();
-
-                if (!carList.Any())
-                {
-                    return [ ];
-                }
-
-                return carList;
+                carsQuery = carsQuery.Where(c => c.Condition == selectedCondition);
             }
+
+            if (!string.IsNullOrEmpty(orderBy))
+            {
+                carsQuery = OrderCars.Filter(carsQuery, orderBy);
+            }
+
+            var carList = await carsQuery.ToListAsync();
+
+            if (carList.Count == 0)
+            {
+                return [ ];
+            }
+
             return carList;
         }
     }
