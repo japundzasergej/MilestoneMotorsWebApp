@@ -24,7 +24,7 @@ builder.Services.AddSwaggerGen();
 builder
     .Services
     .AddAutoMapper(typeof(CarMapperProfile).Assembly, typeof(UserMapperProfile).Assembly);
-builder.Services.AddScoped<IPhotoService, PhotoService>();
+builder.Services.AddSingleton<IPhotoService, PhotoService>();
 builder
     .Services
     .Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
