@@ -22,9 +22,9 @@
 
             var response = await userService.GetProfilePicture(userId, jwtToken);
 
-            if(response.Body != null)
+            if(response != null)
             {
-                profilePictureUrl = response.Body.ToString();
+                profilePictureUrl = response;
             }
 
             

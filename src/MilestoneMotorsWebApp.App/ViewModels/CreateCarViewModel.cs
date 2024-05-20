@@ -4,74 +4,74 @@ using MilestoneMotorsWebApp.Domain.Enums;
 
 namespace MilestoneMotorsWebApp.App.ViewModels
 {
-    public class CreateCarViewModel
+    public record CreateCarViewModel
     {
         [Required]
-        public Condition Condition { get; set; }
+        public Condition Condition { get; init; }
 
         [Required]
         [DisplayName("Car Brand")]
-        public Brand Brand { get; set; }
+        public Brand Brand { get; init; }
 
         [Required]
         [MaxLength(150, ErrorMessage = "Max length of 100 characters")]
-        public string Description { get; set; }
+        public string Description { get; init; }
 
         [Required]
-        public double Price { get; set; }
+        public double Price { get; init; }
 
         [Required]
         [DisplayName("Car Model")]
-        public string Model { get; set; }
+        public string Model { get; init; }
 
         [Required]
         [DisplayName("Manufacturing Year")]
         [Range(typeof(int), "1920", "2024", ErrorMessage = "Invalid Manufacturing Year")]
-        public int ManufacturingYear { get; set; }
+        public int ManufacturingYear { get; init; }
 
         [Required]
-        public string Mileage { get; set; }
+        public int Mileage { get; init; }
 
         [Required]
         [DisplayName("Body Type")]
-        public BodyTypes BodyTypes { get; set; }
+        public BodyTypes BodyTypes { get; init; }
 
         [Required]
         [DisplayName("Fuel Types")]
-        public FuelTypes FuelTypes { get; set; }
+        public FuelTypes FuelTypes { get; init; }
 
         [Required]
         [DisplayName("Engine Capacity")]
-        public int EngineCapacity { get; set; }
+        public int EngineCapacity { get; init; }
 
         [Required]
         [DisplayName("Engine Power")]
-        public string EnginePower { get; set; }
+        public int EnginePower { get; init; }
 
         [Required]
         [DisplayName("Fixed Price")]
-        public YesOrNo FixedPrice { get; set; }
+        public YesOrNo FixedPrice { get; init; }
 
         [Required]
-        public YesOrNo Exchange { get; set; }
+        public YesOrNo Exchange { get; init; }
 
         [Required]
         [DisplayName("Headliner Image")]
-        public IFormFile? HeadlinerImageUrl { get; set; }
+        public IFormFile? HeadlinerImageUrl { get; init; }
 
         [Required(ErrorMessage = "Image required")]
-        public IFormFile? PhotoOne { get; set; }
+        public IFormFile? PhotoOne { get; init; }
 
         [Required(ErrorMessage = "Image required")]
-        public IFormFile? PhotoTwo { get; set; }
+        public IFormFile? PhotoTwo { get; init; }
 
         [Required(ErrorMessage = "Image required")]
-        public IFormFile? PhotoThree { get; set; }
+        public IFormFile? PhotoThree { get; init; }
 
-        public IFormFile? PhotoFour { get; set; }
+        public IFormFile? PhotoFour { get; init; }
 
-        public IFormFile? PhotoFive { get; set; }
-        public string? UserId { get; set; }
-        public string? AdNumber { get; set; }
+        public IFormFile? PhotoFive { get; init; }
+        public string? UserId { get; init; }
+        public string? AdNumber { get; init; }
     }
 }

@@ -8,6 +8,6 @@ namespace MilestoneMotorsWebApp.Domain.Entities
         public string Country { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string State { get; set; } = string.Empty;
-        public List<Car> MyListings { get; set; }
+        public List<Car> MyListings { get; init; }
     }
 }

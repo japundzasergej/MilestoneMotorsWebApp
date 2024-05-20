@@ -1,160 +1,73 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using MilestoneMotorsWebApp.App.Attributes;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using MilestoneMotorsWebApp.App.Controllers;
 using MilestoneMotorsWebApp.App.Interfaces;
-using MilestoneMotorsWebApp.App.Models;
 using MilestoneMotorsWebApp.App.ViewModels;
 using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Domain.Entities;
 
 namespace MilestoneMotorsWeb.Controllers
 {
-    public class UserController(IUserService userService, IMvcMapperService mvcMapperService)
-        : BaseController<IUserService>(userService, mvcMapperService)
+    public class UserController(IUserService userService, IMapper mapper) : BaseController
     {
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> Detail(string? id)
         {
-            var response = await _service.GetUserDetail(id, GetToken());
-            var error = HandleErrors(response, new());
+            var response = await userService.GetUserDetail(id, GetToken());
 
-            if (error != null)
-            {
-                return error;
-            }
-
-            if (response.Body != null)
-            {
-                return View(
-                    _mapperService.Map<UserDto, UserAccountViewModel>(
-                        ConvertFromJson<UserDto>(response.Body)
-                    )
-                );
-            }
-            TempData["Error"] = "Something went wrong, please try again";
-            return RedirectToAction("Index", "Home");
+            return View(mapper.Map<UserAccountViewModel>(response));
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> EditPage(string? id)
         {
-            var response = await _service.GetUserEdit(id, GetToken());
+            var response = await userService.GetUserEdit(id, GetToken());
 
-            var error = HandleErrors(response, new());
-
-            if (error != null)
-            {
-                return error;
-            }
-
-            if (response.Body != null)
-            {
-                return View(
-                    _mapperService.Map<EditUserDto, EditUserViewModel>(
-                        ConvertFromJson<EditUserDto>(response.Body)
-                    )
-                );
-            }
-
-            TempData["Error"] = "Something went wrong, please try again";
-            return RedirectToAction("Index", "Home");
+            return View(mapper.Map<EditUserViewModel>(response));
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         public async Task<IActionResult> EditPage(EditUserViewModel editVM)
         {
             if (ModelState.IsValid)
             {
-                var editDto = _mapperService.Map<EditUserViewModel, EditUserDto>(editVM);
+                var editDto = mapper.Map<EditUserDto>(editVM);
                 editDto.Id = GetUserId();
                 editDto.ImageContentType = editVM.ProfilePictureImageUrl?.ContentType ?? "";
-                var response = await _service.PostUserEdit(editDto, GetToken());
+                var response = await userService.PostUserEdit(editDto, GetToken());
 
-                var error = HandleErrors(
-                    response,
-                    new FailureResponse
-                    {
-                        StatusCode = 400,
-                        ErrorMessage = "Error! Please re-do the form.",
-                        ViewModel = editVM
-                    }
-                );
-
-                if (error != null)
+                if (response.IsImageServiceDown)
                 {
-                    return error;
+                    TempData["Error"] = "Image service is currently down, please try again later.";
                 }
-
-                if (response.Body != null)
-                {
-                    var editUserFeedbackDto = ConvertFromJson<EditUserFeedbackDto>(response.Body);
-                    if (editUserFeedbackDto.IsImageServiceDown)
-                    {
-                        TempData["Error"] =
-                            "Image service is currently down, please try again later.";
-                    }
-                    TempData["Success"] = "Successfully updated profile.";
-                    return RedirectToAction("Detail", "User", new { id = GetUserId() });
-                }
+                TempData["Success"] = "Successfully updated profile.";
+                return RedirectToAction("Detail", "User", new { id = GetUserId() });
             }
             return View(editVM);
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> MyListings()
         {
-            var response = await _service.GetUserCars(GetUserId(), GetToken());
+            var response = await userService.GetUserCars(GetUserId(), GetToken());
 
-            var error = HandleErrors(response, new());
-
-            if (error != null)
-            {
-                return error;
-            }
-
-            if (response.Body != null)
-            {
-                return View(
-                    new GetUserCarsViewModel { Cars = ConvertFromJson<List<CarDto>>(response.Body) }
-                );
-            }
-            TempData["Error"] = "Something went wrong, please try again";
-            return RedirectToAction("Index", "Home");
+            return View(new GetUserCarsViewModel { Cars = response });
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         [Route("User/DeleteUser")]
         public async Task<IActionResult> DeleteUser()
         {
-            var response = await _service.DeleteUser(GetUserId(), GetToken());
+            var response = await userService.DeleteUser(GetUserId(), GetToken());
 
-            var error = HandleErrors(response, new());
-
-            if (error != null)
+            if (!response)
             {
-                return error;
+                TempData["Error"] =
+                    "Something went wrong while deleting your account, please try again later.";
+                return RedirectToAction("Detail", "User", new { id = GetUserId() });
             }
-
-            if (response.Body != null)
+            else
             {
-                var result = (bool)response.Body;
-                if (!result)
-                {
-                    TempData["Error"] =
-                        "Something went wrong while deleting your account, please try again later.";
-                    return RedirectToAction("Detail", "User", new { id = GetUserId() });
-                }
-                else
-                {
-                    HttpContext.Session.Remove("JwtToken");
-                    TempData["Success"] = "Account successfully deleted.";
-                    return RedirectToAction("Index", "Home");
-                }
+                HttpContext.Session.Remove("JwtToken");
+                TempData["Success"] = "Account successfully deleted.";
+                return RedirectToAction("Index", "Home");
             }
-            TempData["Error"] = "Something went wrong, please try again";
-            return RedirectToAction("Index", "Home");
         }
     }
 }

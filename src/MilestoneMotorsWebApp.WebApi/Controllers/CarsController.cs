@@ -4,57 +4,75 @@ using Microsoft.AspNetCore.Mvc;
 using MilestoneMotorsWebApp.Business.Cars.Commands;
 using MilestoneMotorsWebApp.Business.Cars.Queries;
 using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Domain.Entities;
 
 namespace MilestoneMotorsWebApp.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class CarsController(IMediator mediator) : BaseController(mediator)
+    public class CarsController(IMediator mediator) : Controller
     {
+        [AllowAnonymous]
         [HttpGet]
-        public async Task<ResponseDTO> GetAllCars([FromQuery] GetAllCarsQuery query)
+        public async Task<IActionResult> GetAllCars(
+            [FromQuery] string? search,
+            [FromQuery] string? orderBy,
+            [FromQuery] string? fuelType,
+            [FromQuery] string? condition,
+            [FromQuery] string? brand
+        )
         {
-            return await _mediator.Send(query);
+            var response = await mediator.Send(
+                new GetAllCarsQuery
+                {
+                    Search = search,
+                    OrderBy = orderBy,
+                    FuelType = fuelType,
+                    Condition = condition,
+                    Brand = brand
+                }
+            );
+            return Ok(response);
         }
 
+        [AllowAnonymous]
         [HttpGet]
         [Route("{id:int}")]
-        public async Task<ResponseDTO> GetSingleCar([FromRoute] GetSingleCarQuery query)
+        public async Task<IActionResult> GetSingleCar([FromRoute] int id)
         {
-            return await _mediator.Send(query);
+            var response = await mediator.Send(new GetSingleCarQuery { Id = id });
+            return Ok(response);
         }
 
-        [Authorize]
         [HttpPost]
         [Route("create")]
-        public async Task<ResponseDTO> CreateCar([FromBody] CreateCarCommand command)
+        public async Task<IActionResult> CreateCar([FromBody] CreateCarDto dto)
         {
-            return await _mediator.Send(command);
+            var response = await mediator.Send(new CreateCarCommand { CreateCarDto = dto });
+            return Ok(response);
         }
 
-        [Authorize]
         [HttpGet]
         [Route("edit/{id:int}")]
-        public async Task<ResponseDTO> GetEditCar([FromRoute] EditCarQuery query)
+        public async Task<IActionResult> GetEditCar([FromRoute] int id)
         {
-            return await _mediator.Send(query);
+            var response = await mediator.Send(new EditCarQuery { Id = id });
+            return Ok(response);
         }
 
-        [Authorize]
         [HttpPut]
         [Route("edit")]
-        public async Task<ResponseDTO> PostEditCar([FromBody] EditCarCommand command)
+        public async Task<IActionResult> PostEditCar([FromBody] EditCarDto dto)
         {
-            return await _mediator.Send(command);
+            var response = await mediator.Send(new EditCarCommand { EditCarDto = dto });
+            return Ok(response);
         }
 
-        [Authorize]
         [HttpDelete]
         [Route("delete/{id:int}")]
-        public async Task<ResponseDTO> DeleteCar([FromRoute] DeleteCarCommand command)
+        public async Task<IActionResult> DeleteCar([FromRoute] int id)
         {
-            return await _mediator.Send(command);
+            var response = await mediator.Send(new DeleteCarCommand { Id = id });
+            return Ok(response);
         }
     }
 }

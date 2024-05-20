@@ -1,22 +1,15 @@
-﻿using MediatR;
-using MilestoneMotorsWebApp.Business.Cars.Helpers;
+﻿using AutoMapper;
+using MediatR;
 using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Business.Helpers;
-using MilestoneMotorsWebApp.Business.Interfaces;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
 
 namespace MilestoneMotorsWebApp.Business.Cars.Queries
 {
-    public class GetAllCarsQueryHandler(
-        ICarsRepository carsRepository,
-        IMapperService mapperService
-    ) : IRequestHandler<GetAllCarsQuery, ResponseDTO>
+    public class GetAllCarsQueryHandler(ICarsRepository carsRepository, IMapper mapper)
+        : IRequestHandler<GetAllCarsQuery, IEnumerable<CarDto>>
     {
-        private readonly ICarsRepository _carsRepository = carsRepository;
-        private readonly IMapperService _mapperService = mapperService;
-
-        public async Task<ResponseDTO> Handle(
+        public async Task<IEnumerable<CarDto>> Handle(
             GetAllCarsQuery request,
             CancellationToken cancellationToken
         )
@@ -24,42 +17,38 @@ namespace MilestoneMotorsWebApp.Business.Cars.Queries
             var search = request.Search;
             var orderBy = request.OrderBy;
             var fuelType = request.FuelType;
-            var brand = request.Brand;
             var condition = request.Condition;
+            var brand = request.Brand;
 
-            try
+            if (!string.IsNullOrEmpty(search))
             {
-                var carsList = await _carsRepository.GetAllCarsAsync();
+                var searchedList = await carsRepository.SearchCarsAsync(search, orderBy);
+                var carList = searchedList.Select(mapper.Map<Car, CarDto>);
 
-                var searchedList = carsList
-                    .Where(
-                        c =>
-                            string.IsNullOrWhiteSpace(search)
-                            || c.Brand
-                                .ToString()
-                                .StartsWith(search, StringComparison.OrdinalIgnoreCase)
-                            || c.Model.StartsWith(search, StringComparison.OrdinalIgnoreCase)
-                    )
-                    .ToList();
-
-                searchedList = CarFilters.ApplyOrdering(searchedList, orderBy);
-                searchedList = CarFilters.ApplyFuelTypeFilter(searchedList, fuelType);
-                searchedList = CarFilters.ApplyBrandFilter(searchedList, brand);
-                searchedList = CarFilters.ApplyConditionFilter(searchedList, condition);
-
-                if (searchedList.Count == 0)
-                {
-                    return PopulateResponseDto.OnSuccess(new List<CarDto>(), 200);
-                }
-
-                return PopulateResponseDto.OnSuccess(
-                    searchedList.Select(_mapperService.Map<Car, CarDto>),
-                    200
-                );
+                return carList;
             }
-            catch (Exception e)
+            else if (
+                !string.IsNullOrEmpty(condition)
+                || !string.IsNullOrEmpty(fuelType)
+                || !string.IsNullOrEmpty(brand)
+            )
             {
-                return PopulateResponseDto.OnError(e);
+                var filteredList = await carsRepository.FilteredCarsAsync(
+                    brand,
+                    fuelType,
+                    condition,
+                    orderBy
+                );
+                var carList = filteredList.Select(mapper.Map<Car, CarDto>);
+
+                return carList;
+            }
+            else
+            {
+                var completeList = await carsRepository.GetAllCarsAsync(orderBy);
+                var carList = completeList.Select(mapper.Map<Car, CarDto>);
+
+                return carList;
             }
         }
     }

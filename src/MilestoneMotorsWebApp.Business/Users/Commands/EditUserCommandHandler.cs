@@ -1,7 +1,7 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Business.Helpers;
 using MilestoneMotorsWebApp.Business.Interfaces;
 using MilestoneMotorsWebApp.Business.Utilities;
 using MilestoneMotorsWebApp.Domain.Entities;
@@ -13,87 +13,70 @@ namespace MilestoneMotorsWebApp.Business.Users.Commands
         IUserRepository userRepository,
         IPhotoService photoService,
         UserManager<User> userManager
-    ) : IRequestHandler<EditUserCommand, ResponseDTO>
+    ) : IRequestHandler<EditUserCommand, EditUserFeedbackDto>
     {
-        private readonly IUserRepository _userRepository = userRepository;
-        private readonly IPhotoService _photoService = photoService;
-        private readonly UserManager<User> _userManager = userManager;
-
-        public async Task<ResponseDTO> Handle(
+        public async Task<EditUserFeedbackDto> Handle(
             EditUserCommand request,
             CancellationToken cancellationToken
         )
         {
             var editDto = request.EditUserDto;
-            var id = editDto.Id;
             var contentType = editDto.ImageContentType ?? "";
-            try
-            {
-                var user = await _userRepository.GetByIdAsync(id);
-                var editFeedbackDto = new EditUserFeedbackDto();
 
-                if (user == null)
+            var user =
+                await userRepository.GetByIdAsync(editDto.Id)
+                ?? throw new InvalidDataException("Object doesn't exist");
+            var editFeedbackDto = new EditUserFeedbackDto();
+
+            if (editDto.ProfilePictureImageUrl != null && editDto.ProfilePictureImageUrl.Length > 0)
+            {
+                var photoResult = (string?)
+                    await photoService.CloudinaryUpload(
+                        editDto.ProfilePictureImageUrl,
+                        contentType
+                    );
+
+                if (photoResult == null)
                 {
-                    return PopulateResponseDto.OnFailure(404);
+                    editFeedbackDto.IsImageServiceDown = true;
                 }
 
-                if (
-                    editDto.ProfilePictureImageUrl != null
-                    && editDto.ProfilePictureImageUrl.Length > 0
-                )
+                if (!string.IsNullOrEmpty(user.ProfilePictureImageUrl))
                 {
-                    var photoResult = (string?)
-                        await _photoService.CloudinaryUpload(
-                            editDto.ProfilePictureImageUrl,
-                            contentType
-                        );
+                    _ = photoService.DeletePhotoAsync(user.ProfilePictureImageUrl);
+                }
 
-                    if (photoResult == null)
-                    {
-                        editFeedbackDto.IsImageServiceDown = true;
-                    }
+                user.ProfilePictureImageUrl = photoResult ?? user.ProfilePictureImageUrl;
+                user.City = editDto?.City?.FirstCharToUpper().Trim() ?? string.Empty;
+                user.State = editDto?.State?.FirstCharToUpper().Trim() ?? string.Empty;
+                user.Country = editDto?.Country?.FirstCharToUpper().Trim() ?? string.Empty;
 
-                    if (!string.IsNullOrEmpty(user.ProfilePictureImageUrl))
-                    {
-                        _ = _photoService.DeletePhotoAsync(user.ProfilePictureImageUrl);
-                    }
-
-                    user.ProfilePictureImageUrl = photoResult ?? user.ProfilePictureImageUrl;
-                    user.City = editDto?.City?.FirstCharToUpper().Trim() ?? string.Empty;
-                    user.State = editDto?.State?.FirstCharToUpper().Trim() ?? string.Empty;
-                    user.Country = editDto?.Country?.FirstCharToUpper().Trim() ?? string.Empty;
-
-                    var result = await _userManager.UpdateAsync(user);
-                    if (result.Succeeded)
-                    {
-                        return PopulateResponseDto.OnSuccess(editFeedbackDto, 200);
-                    }
-                    else
-                    {
-                        return PopulateResponseDto.OnFailure(400, result.Errors);
-                    }
+                var result = await userManager.UpdateAsync(user);
+                if (result.Succeeded)
+                {
+                    return editFeedbackDto;
                 }
                 else
                 {
-                    user.City = editDto?.City?.FirstCharToUpper().Trim() ?? string.Empty;
-                    user.State = editDto?.State?.FirstCharToUpper().Trim() ?? string.Empty;
-                    user.Country = editDto?.Country?.FirstCharToUpper().Trim() ?? string.Empty;
-
-                    var result = await _userManager.UpdateAsync(user);
-
-                    if (result.Succeeded)
-                    {
-                        return PopulateResponseDto.OnSuccess(editFeedbackDto, 200);
-                    }
-                    else
-                    {
-                        return PopulateResponseDto.OnFailure(400, result.Errors);
-                    }
+                    throw new BadHttpRequestException("Invalid request format.");
                 }
             }
-            catch (Exception e)
+            else
             {
-                return PopulateResponseDto.OnError(e);
+                user.City = editDto?.City?.FirstCharToUpper().Trim() ?? string.Empty;
+                user.State = editDto?.State?.FirstCharToUpper().Trim() ?? string.Empty;
+                user.Country = editDto?.Country?.FirstCharToUpper().Trim() ?? string.Empty;
+
+                var result = await userManager.UpdateAsync(user);
+
+                if (result.Succeeded)
+                {
+                    return editFeedbackDto;
+                }
+                else
+                {
+                    throw new BadHttpRequestException("Invalid request format.");
+                }
             }
         }
     }

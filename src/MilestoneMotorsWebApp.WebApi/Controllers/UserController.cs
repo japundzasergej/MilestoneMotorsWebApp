@@ -1,62 +1,61 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MilestoneMotorsWebApp.Business.DTO;
 using MilestoneMotorsWebApp.Business.Users.Commands;
 using MilestoneMotorsWebApp.Business.Users.Queries;
-using MilestoneMotorsWebApp.Domain.Entities;
 
 namespace MilestoneMotorsWebApp.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class UserController(IMediator mediator) : BaseController(mediator)
+    public class UserController(IMediator mediator) : Controller
     {
-        [Authorize]
         [HttpGet]
         [Route("{id}")]
-        public async Task<ResponseDTO> GetUserDetail([FromRoute] GetUserDetailQuery query)
+        public async Task<IActionResult> GetUserDetail([FromRoute] string id)
         {
-            return await _mediator.Send(query);
+            var response = await mediator.Send(new GetUserDetailQuery { Id = id });
+            return Ok(response);
         }
 
-        [Authorize]
         [HttpGet]
         [Route("edit/{id}")]
-        public async Task<ResponseDTO> GetEditUser([FromRoute] EditUserQuery query)
+        public async Task<IActionResult> GetEditUser([FromRoute] string id)
         {
-            return await _mediator.Send(query);
+            var response = await mediator.Send(new EditUserQuery { Id = id });
+            return Ok(response);
         }
 
-        [Authorize]
         [HttpPut]
         [Route("edit")]
-        public async Task<ResponseDTO> PostEditUser([FromBody] EditUserCommand command)
+        public async Task<IActionResult> PostEditUser([FromBody] EditUserDto dto)
         {
-            return await _mediator.Send(command);
+            var response = await mediator.Send(new EditUserCommand { EditUserDto = dto });
+            return Ok(response);
         }
 
-        [Authorize]
         [HttpGet]
         [Route("userCars/{id}")]
-        public async Task<ResponseDTO> GetUserCars([FromRoute] GetUserCarsQuery query)
+        public async Task<IActionResult> GetUserCars([FromRoute] string id)
         {
-            return await _mediator.Send(query);
+            var response = await mediator.Send(new GetUserCarsQuery { Id = id });
+            return Ok(response);
         }
 
-        [Authorize]
         [HttpDelete]
         [Route("delete/{id}")]
-        public async Task<ResponseDTO> DeleteUser([FromRoute] DeleteUserCommand command)
+        public async Task<IActionResult> DeleteUser([FromRoute] string id)
         {
-            return await _mediator.Send(command);
+            var response = await mediator.Send(new DeleteUserCommand { Id = id });
+            return Ok(response);
         }
 
         [HttpGet]
         [Route("profilePicture/{id}")]
-        public async Task<ResponseDTO> GetProfilePicture([FromRoute] GetProfilePictureQuery query)
+        public async Task<IActionResult> GetProfilePicture([FromRoute] string id)
         {
-            return await _mediator.Send(query);
+            var response = await mediator.Send(new GetProfilePictureQuery { Id = id });
+            return Ok(response);
         }
     }
 }

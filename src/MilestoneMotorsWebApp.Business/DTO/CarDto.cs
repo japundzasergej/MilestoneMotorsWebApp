@@ -1,36 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MilestoneMotorsWebApp.Domain.Entities;
+﻿using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Domain.Enums;
 
 namespace MilestoneMotorsWebApp.Business.DTO
 {
-    public class CarDto
+    public record CarDto
     {
-        public int Id { get; set; }
-        public Condition Condition { get; set; }
-        public Brand Brand { get; set; }
-        public string Description { get; set; }
-        public string Price { get; set; }
-        public string Model { get; set; }
-        public int ManufacturingYear { get; set; }
-        public string Mileage { get; set; }
-        public BodyTypes BodyTypes { get; set; }
-        public FuelTypes FuelTypes { get; set; }
-        public string EngineCapacity { get; set; }
-        public string EnginePower { get; set; }
-        public YesOrNo FixedPrice { get; set; }
-        public YesOrNo Exchange { get; set; }
-        public string? HeadlinerImageUrl { get; set; }
-        public List<string>? ImagesUrl { get; set; }
-        public string? AdNumber { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public string? UserId { get; set; }
-        public User? User { get; set; }
+        public int Id { get; init; }
+        public Condition Condition { get; init; }
+        public Brand Brand { get; init; }
+        public string Description { get; init; }
+        public double Price { get; init; }
+        public string Model { get; init; }
+        public int ManufacturingYear { get; init; }
+        public int Mileage { get; init; }
+        public BodyTypes BodyTypes { get; init; }
+        public FuelTypes FuelTypes { get; init; }
+        public int EngineCapacity { get; init; }
+        public int EnginePower { get; init; }
+        public YesOrNo FixedPrice { get; init; }
+        public YesOrNo Exchange { get; init; }
+        public string? HeadlinerImageUrl { get; init; }
+        public List<string>? ImagesUrl { get; init; }
+        public string? AdNumber { get; init; }
+        public DateTime CreatedAt { get; init; }
+        public string? UserId { get; init; }
+        public User? User { get; init; }
     }
 }

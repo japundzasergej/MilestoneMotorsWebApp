@@ -6,7 +6,7 @@
 @using MilestoneMotorsWebApp.Domain.Enums
 @using MilestoneMotorsWebApp.Business.DTO
 @inject IHttpContextAccessor contextAccessor
-@model X.PagedList.IPagedList<CarDto>
+@model MilestoneMotorsWebApp.App.ViewModels.GetCarsViewModel
 @{
     ViewData["Title"] = "Home Page";
 }
@@ -66,10 +66,10 @@
                 <a id="clearFiltersButton" href="@Url.Action("Index", new {
                     search = ViewBag.Search,
                     page = ViewBag.Page,
-                    orderBy = (string)null,
-                    fuelTypeFilter = (string)null, 
-                    conditionFilter = (string)null,
-                    brandFilter = (string)null})" class="btn btn-outline-danger">
+                    orderBy = "",
+                    fuelType = "", 
+                    condition = "",
+                    brand = ""})" class="btn btn-outline-danger">
                     <i class="fas fa-times"></i>
                     &nbsp;Clear filters
                 </a>
@@ -84,7 +84,7 @@
                                     <div class="d-flex flex-column text-center">
                                         @foreach (var c in Enum.GetValues(typeof(FuelTypes)))
                                         {
-                                            <a class="filter-link" href="@Url.Action("Index", new { fuelTypeFilter = c, search = ViewBag.Search, orderBy = ViewBag.OrderBy, page = (string)null })">
+                                            <a class="filter-link" href="@Url.Action("Index", new { fuelType = c, search = "", orderBy = ViewBag.OrderBy, page = "" })">
                                                 @c.ToString()
                                             </a>
                                             <hr />
@@ -100,7 +100,7 @@
                                     <div class="d-flex flex-column text-center">
                                         @foreach (var c in Enum.GetValues(typeof(Brand)))
                                         {
-                                            <a class="filter-link" href="@Url.Action("Index", new { brandFilter = c, search = ViewBag.Search, orderBy = ViewBag.OrderBy, page = (string)null })">
+                                            <a class="filter-link" href="@Url.Action("Index", new { brand = c, search = "", orderBy = ViewBag.OrderBy, page = (string)null })">
                                                 @c.ToString()
                                             </a>
                                             <hr />
@@ -116,7 +116,7 @@
                                     <div class="d-flex flex-column text-center">
                                         @foreach(var c in Enum.GetValues<Condition>())
                                         {
-                                            <a class="filter-link" href="@Url.Action("Index", new { conditionFilter = c, search = ViewBag.Search, orderBy = ViewBag.OrderBy, page = (string)null })">@c.ToString()</a>
+                                            <a class="filter-link" href="@Url.Action("Index", new { condition = c, search = "", orderBy = ViewBag.OrderBy, page = (string)null })">@c.ToString()</a>
                                             <hr>
                                         }
                                     </div>
@@ -126,15 +126,15 @@
                     </div>
                     <div class="row">
                         <div class="col filter-col">
-                            <a class="filter-buttons btn btn-outline-secondary" style="margin-right: 5px;" href="@Url.Action("Index", new { orderBy = "priceDesc", search = ViewBag.Search, fuelTypeFilter = ViewBag.FuelTypeFilter, bodyTypeFilter = ViewBag.BodyTypeFilter, brandFilter = ViewBag.BrandFilter, page = ViewBag.Page })"><i class="fas fa-sort-amount-down"></i>&nbsp;By Price</a>
+                            <a class="filter-buttons btn btn-outline-secondary" style="margin-right: 5px;" href="@Url.Action("Index", new { orderBy = "priceDesc", search = ViewBag.Search, fuelType = ViewBag.FuelType, condition = ViewBag.Condition, brand = ViewBag.Brand, page = ViewBag.Page })"><i class="fas fa-sort-amount-down"></i>&nbsp;By Price</a>
                         </div>
                         <div class="col filter-col">
-                            <a class="filter-buttons btn btn-outline-secondary" style="margin-right: 5px;" href="@Url.Action("Index", new { orderBy = "priceAsc", search = ViewBag.Search, fuelTypeFilter = ViewBag.FuelTypeFilter, bodyTypeFilter = ViewBag.BodyTypeFilter, brandFilter = ViewBag.BrandFilter, page = ViewBag.Page })">
+                            <a class="filter-buttons btn btn-outline-secondary" style="margin-right: 5px;" href="@Url.Action("Index", new { orderBy = "priceAsc", search = ViewBag.Search, fuelType = ViewBag.FuelType, condition = ViewBag.Condition, brand = ViewBag.Brand, page = ViewBag.Page })">
                                 <i class="fas fa-sort-amount-up"></i>&nbsp;By Price
                             </a>
                         </div>
                         <div class="col filter-col">
-                            <a class="filter-buttons btn btn-outline-secondary" style="margin-right: 5px;" href="@Url.Action("Index", new { orderBy = "yearDesc", search = ViewBag.Search, fuelTypeFilter = ViewBag.FuelTypeFilter, bodyTypeFilter = ViewBag.BodyTypeFilter, brandFilter = ViewBag.BrandFilter, page = ViewBag.Page })">
+                            <a class="filter-buttons btn btn-outline-secondary" style="margin-right: 5px;" href="@Url.Action("Index", new { orderBy = "yearDesc", search = ViewBag.Search, fuelType = ViewBag.FuelType, condition = ViewBag.Condition, brand = ViewBag.Brand, page = ViewBag.Page })">
                                 <i class="fas fa-sort-amount-down"></i>&nbsp;By Year
                             </a>
                         </div>
@@ -150,10 +150,10 @@
         <div class="album py-5 bg-light">
             <div class="container">
 
-                @if (Model != null && Model.Count > 0)
+                @if (Model != null && Model.Cars.Count > 0)
                 {
                     <div class="row responsive-card-columns">
-                        @foreach (var car in Model)
+                        @foreach (var car in Model.Cars)
                         {
                             <div class="col-md-4 col-sm-6">
                                 <div class="card mb-4 box-shadow">
@@ -174,7 +174,7 @@
                                         </p>
                                         <p class="card-text" style="margin-bottom: 4px;">
                                             <strong>
-                                                @car.Price
+                                                @ConvertToEuroMethod.ConvertToEuro(car.Price)
                                             </strong>
                                         </p>
                                         <p class="card-text" style="min-height: 65.8px; max-height: 65.8px;">
@@ -250,14 +250,14 @@
                         }
                     </div>
                    <div class="pagination-container">
-                        @Html.PagedListPager(Model, page => Url.Action("Index", new
+                        @Html.PagedListPager(Model.Cars, page => Url.Action("Index", new
                             {
                                 page,
                                 search = ViewBag.Search,
                                 orderBy = ViewBag.OrderBy,
-                                fuelTypeFilter = ViewBag.FuelTypeFilter,
-                                conditionFilter = ViewBag.BodyTypeFilter,
-                                brandFilter = ViewBag.BrandFilter
+                                fuelType = ViewBag.FuelType,
+                                conditionFilter = ViewBag.Condition,
+                                brand = ViewBag.Brand
                             }))
                    </div>
                 }

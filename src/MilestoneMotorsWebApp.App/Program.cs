@@ -1,6 +1,7 @@
 using MilestoneMotorsWebApp.App.AppConfig;
-using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Interfaces;
+using MilestoneMotorsWebApp.App.Mapper;
+using MilestoneMotorsWebApp.App.Middleware;
 using MilestoneMotorsWebApp.App.Services;
 using MilestoneMotorsWebApp.Business.Utilities;
 
@@ -13,7 +14,11 @@ builder.Services.AddMemoryCache();
 builder.Services.AddSession();
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddTransient<IMvcMapperService, MvcMapperService>();
+builder.Services.AddTransient<GlobalExceptionHandler>();
+builder.Services.AddTransient<JwtMiddleware>();
+builder
+    .Services
+    .AddAutoMapper(typeof(CarMapperProfile).Assembly, typeof(UserMapperProfile).Assembly);
 builder
     .Services
     .AddHttpClient<ICarService, CarService>(client =>
@@ -33,18 +38,16 @@ builder
         client.BaseAddress = uriBuilder.Uri.ExtendPath("account");
     });
 
-builder.Services.AddScoped<JwtSessionAuthenticationAttribute>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
-app.UseStatusCodePagesWithRedirects("/Home/Error?statuscode={0}");
+app.UseMiddleware<GlobalExceptionHandler>();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -52,8 +55,7 @@ app.UseSession();
 
 app.UseRouting();
 
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseMiddleware<JwtMiddleware>();
 
 app.UseAntiforgery();
 

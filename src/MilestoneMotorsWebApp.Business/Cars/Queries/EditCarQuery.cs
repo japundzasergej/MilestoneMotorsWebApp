@@ -4,9 +4,9 @@ using MilestoneMotorsWebApp.Business.DTO;
 
 namespace MilestoneMotorsWebApp.Business.Cars.Queries
 {
-    public class EditCarQuery : IRequest<ResponseDTO>
+    public class EditCarQuery : IRequest<EditCarDto>
     {
         [FromRoute]
-        public int Id { get; set; }
+        public int Id { get; init; }
     }
 }

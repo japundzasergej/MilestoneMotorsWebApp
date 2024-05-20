@@ -1,6 +1,6 @@
 ﻿namespace MilestoneMotorsWebApp.Business.DTO
 {
-    public class EditUserFeedbackDto
+    public record EditUserFeedbackDto
     {
         public bool IsImageServiceDown { get; set; } = false;
     }

@@ -2,49 +2,51 @@
 
 namespace MilestoneMotorsWebApp.Business.DTO
 {
-    public class CreateCarDto
+    public record CreateCarDto
     {
-        public Condition Condition { get; set; }
+        public Condition Condition { get; init; }
 
-        public Brand Brand { get; set; }
+        public Brand Brand { get; init; }
 
-        public string Description { get; set; }
+        public string Description { get; init; }
 
-        public string Price { get; set; }
+        public double Price { get; init; }
 
-        public string Model { get; set; }
+        public string Model { get; init; }
 
-        public int ManufacturingYear { get; set; }
+        public int ManufacturingYear { get; init; }
 
-        public string Mileage { get; set; }
+        public int Mileage { get; init; }
 
-        public BodyTypes BodyTypes { get; set; }
+        public BodyTypes BodyTypes { get; init; }
 
-        public FuelTypes FuelTypes { get; set; }
+        public FuelTypes FuelTypes { get; init; }
 
-        public string EngineCapacity { get; set; }
+        public int EngineCapacity { get; init; }
 
-        public string EnginePower { get; set; }
+        public int EnginePower { get; init; }
 
-        public YesOrNo FixedPrice { get; set; }
+        public YesOrNo FixedPrice { get; init; }
 
-        public YesOrNo Exchange { get; set; }
+        public YesOrNo Exchange { get; init; }
 
-        public byte[]? HeadlinerImageUrl { get; set; }
+        public byte[]? HeadlinerImageUrl { get; init; }
 
-        public byte[]? PhotoOne { get; set; }
+        public byte[]? PhotoOne { get; init; }
 
-        public byte[]? PhotoTwo { get; set; }
+        public byte[]? PhotoTwo { get; init; }
 
-        public byte[]? PhotoThree { get; set; }
+        public byte[]? PhotoThree { get; init; }
 
-        public byte[]? PhotoFour { get; set; }
+        public byte[]? PhotoFour { get; init; }
 
-        public byte[]? PhotoFive { get; set; }
+        public byte[]? PhotoFive { get; init; }
 
         public string? UserId { get; set; }
 
-        public string? AdNumber { get; set; }
+        public string? AdNumber { get; init; }
+
+        public DateTime CreatedAt { get; set; }
 
         public List<string> ImageContentTypes { get; set; }
     }

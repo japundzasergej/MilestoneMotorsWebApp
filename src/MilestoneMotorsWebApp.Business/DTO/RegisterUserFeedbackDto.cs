@@ -2,10 +2,10 @@
 
 namespace MilestoneMotorsWebApp.Business.DTO
 {
-    public class RegisterUserFeedbackDto
+    public record RegisterUserFeedbackDto
     {
         public bool UserExists { get; set; } = false;
         public bool ResponseFailed { get; set; } = false;
-        public List<IdentityError> ErrorList { get; set; } = [ ];
+        public List<IdentityError> ErrorList { get; init; } = [ ];
     }
 }

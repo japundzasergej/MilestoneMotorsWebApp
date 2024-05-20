@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
-using MilestoneMotorsWebApp.Business.Utilities;
 using MilestoneMotorsWebApp.Domain.Constants;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Domain.Enums;
@@ -29,12 +28,12 @@ namespace MilestoneMotorsWebApp.Business
                     i
                 );
                 int manufacturingYear = GetPlausibleManufacturingYear(model);
-                string price = GetRandomPrice(brand, condition, manufacturingYear);
-                string mileage = GetPlausibleMileage(condition);
+                double price = GetRandomPrice(brand, condition, manufacturingYear);
+                int mileage = GetPlausibleMileage(condition);
                 BodyTypes bodyType = GetBodyTypeByModel(model);
                 FuelTypes fuelType = GetFuelTypeByModel(model);
-                string engineCapacity = GetPlausibleEngineCapacity(model);
-                string enginePower = GetPlausibleEnginePower();
+                int engineCapacity = GetPlausibleEngineCapacity(model);
+                int enginePower = GetPlausibleEnginePower();
                 YesOrNo fixedPrice = GetRandomYesOrNo();
                 YesOrNo exchange = GetRandomYesOrNo();
                 string headlinerImageUrl = GetHeadlinerByModel(model);
@@ -248,7 +247,7 @@ namespace MilestoneMotorsWebApp.Business
             };
         }
 
-        private static string GetRandomPrice(
+        private static double GetRandomPrice(
             Brand brand,
             Condition condition,
             int manufacturingYear
@@ -273,12 +272,8 @@ namespace MilestoneMotorsWebApp.Business
                     _ => (double)0,
                 };
                 return isExpensive
-                    ? ConvertToEuroMethod.ConvertToEuro(
-                        estimatedPrice + priceByYear + random.Next(3500, 7500)
-                    )
-                    : ConvertToEuroMethod.ConvertToEuro(
-                        estimatedPrice + priceByYear + random.Next(1500, 2000)
-                    );
+                    ? estimatedPrice + priceByYear + random.Next(3500, 7500)
+                    : estimatedPrice + priceByYear + random.Next(1500, 2000);
             }
             else
             {
@@ -292,12 +287,8 @@ namespace MilestoneMotorsWebApp.Business
                     _ => (double)0,
                 };
                 return isExpensive
-                    ? ConvertToEuroMethod.ConvertToEuro(
-                        estimatedPrice + priceByYear + random.Next(2500, 5000)
-                    )
-                    : ConvertToEuroMethod.ConvertToEuro(
-                        estimatedPrice + priceByYear - random.Next(1500, 2500)
-                    );
+                    ? estimatedPrice + priceByYear + random.Next(2500, 5000)
+                    : estimatedPrice + priceByYear - random.Next(1500, 2500);
             }
         }
 
@@ -329,12 +320,10 @@ namespace MilestoneMotorsWebApp.Business
             };
         }
 
-        private static string GetPlausibleMileage(Condition condition)
+        private static int GetPlausibleMileage(Condition condition)
         {
             var randomNew = random.Next(1000, 25000);
-            return condition == Condition.New
-                ? $"{randomNew} km"
-                : $"{random.Next(10000, 80000)} km";
+            return condition == Condition.New ? randomNew : random.Next(10000, 80000);
         }
 
         private static BodyTypes GetBodyTypeByModel(string model)
@@ -383,36 +372,36 @@ namespace MilestoneMotorsWebApp.Business
             };
         }
 
-        private static string GetPlausibleEngineCapacity(string model)
+        private static int GetPlausibleEngineCapacity(string model)
         {
             return model switch
             {
-                "A5" => "1968 (cm³)",
-                "Jetta" => "2000 (cm³)",
-                "F-150" => "5000 (cm³)",
-                "Camaro" => "3600 (cm³)",
-                "Civic" => "2000 (cm³)",
-                "Altima" => "2500 (cm³)",
-                "X5" => "4400 (cm³)",
-                "C-Class" => "3000 (cm³)",
-                "Q5" => "3000 (cm³)",
-                "Elantra" => "2000 (cm³)",
-                "Soul" => "1600 (cm³)",
-                "Outback" => "3600 (cm³)",
-                "Model 3" => "Electric (no cm³)",
-                "911" => "3800 (cm³)",
-                "F-PACE" => "3000 (cm³)",
-                "MX-5" => "2000 (cm³)",
-                "S60" => "2500 (cm³)",
-                "500" => "900 (cm³)",
-                "Wrangler" => "3600 (cm³)",
-                _ => "2000 (cm³)"
+                "A5" => 1968,
+                "Jetta" => 2000,
+                "F-150" => 5000,
+                "Camaro" => 3600,
+                "Civic" => 2000,
+                "Altima" => 2500,
+                "X5" => 4400,
+                "C-Class" => 3000,
+                "Q5" => 3000,
+                "Elantra" => 2000,
+                "Soul" => 1600,
+                "Outback" => 3600,
+                "Model 3" => 0,
+                "911" => 3800,
+                "F-PACE" => 3000,
+                "MX-5" => 2000,
+                "S60" => 2500,
+                "500" => 900,
+                "Wrangler" => 3600,
+                _ => 2000
             };
         }
 
-        private static string GetPlausibleEnginePower()
+        private static int GetPlausibleEnginePower()
         {
-            return $"{random.Next(100, 300)}/{random.Next(100, 300)} (kW/HP)";
+            return random.Next(100000, 300000);
         }
 
         private static YesOrNo GetRandomYesOrNo()
@@ -653,86 +642,26 @@ namespace MilestoneMotorsWebApp.Business
 
             string[] uniqueUserIds =
             [
-                "013851d7-7b40-4c53-a671-90610c745f75",
-                "0431fed1-5d25-4a66-8a79-1b58d3778d54",
-                "0f62afe8-4786-46ff-a44b-c8b049eb4503",
-                "135aea8d-36a7-4dd2-a0e1-9de865641744",
-                "1d453c67-92a3-43d7-94f1-da6019fa344c",
-                "278f5200-6a66-4302-84e1-b0af136aa51a",
-                "31975fbb-efb3-47ae-8bab-147563490a0f",
-                "34385d40-a076-4a41-96ee-b23cc29dcfd0",
-                "3b1b5408-1de8-479e-ad75-f898e30d7489",
-                "5b5ac7ff-7945-462d-8978-13f2bf38d323",
-                "5b9d05c7-c6c4-4737-a5f9-43cfda9ca27a",
-                "6308fd4a-de63-4da6-90b7-48d69d64bde2",
-                "7730596e-5172-40f2-951f-3d89fb4c6b60",
-                "7a860147-28a5-40c2-a3c8-ee21e3760905",
-                "824963a9-c9e8-4b77-aed0-946700a17b4e",
-                "9d3b263a-45ec-4fde-b94e-2fd5aed5de51",
-                "b029fe70-ab2f-4381-9b68-559ffb08c3f9",
-                "b9e475d3-3f55-4891-a29d-b975158590eb",
-                "bc770897-51e6-4731-b0ce-2d19bfca1ee4",
-                "ccb9e096-cbfb-4fee-bea1-ce8a42e7477e",
-                "013851d7-7b40-4c53-a671-90610c745f75",
-                "0431fed1-5d25-4a66-8a79-1b58d3778d54",
-                "0f62afe8-4786-46ff-a44b-c8b049eb4503",
-                "135aea8d-36a7-4dd2-a0e1-9de865641744",
-                "1d453c67-92a3-43d7-94f1-da6019fa344c",
-                "278f5200-6a66-4302-84e1-b0af136aa51a",
-                "31975fbb-efb3-47ae-8bab-147563490a0f",
-                "34385d40-a076-4a41-96ee-b23cc29dcfd0",
-                "3b1b5408-1de8-479e-ad75-f898e30d7489",
-                "5b5ac7ff-7945-462d-8978-13f2bf38d323",
-                "5b9d05c7-c6c4-4737-a5f9-43cfda9ca27a",
-                "6308fd4a-de63-4da6-90b7-48d69d64bde2",
-                "7730596e-5172-40f2-951f-3d89fb4c6b60",
-                "7a860147-28a5-40c2-a3c8-ee21e3760905",
-                "824963a9-c9e8-4b77-aed0-946700a17b4e",
-                "9d3b263a-45ec-4fde-b94e-2fd5aed5de51",
-                "b029fe70-ab2f-4381-9b68-559ffb08c3f9",
-                "b9e475d3-3f55-4891-a29d-b975158590eb",
-                "bc770897-51e6-4731-b0ce-2d19bfca1ee4",
-                "ccb9e096-cbfb-4fee-bea1-ce8a42e7477e",
-                "013851d7-7b40-4c53-a671-90610c745f75",
-                "0431fed1-5d25-4a66-8a79-1b58d3778d54",
-                "0f62afe8-4786-46ff-a44b-c8b049eb4503",
-                "135aea8d-36a7-4dd2-a0e1-9de865641744",
-                "1d453c67-92a3-43d7-94f1-da6019fa344c",
-                "278f5200-6a66-4302-84e1-b0af136aa51a",
-                "31975fbb-efb3-47ae-8bab-147563490a0f",
-                "34385d40-a076-4a41-96ee-b23cc29dcfd0",
-                "3b1b5408-1de8-479e-ad75-f898e30d7489",
-                "5b5ac7ff-7945-462d-8978-13f2bf38d323",
-                "5b9d05c7-c6c4-4737-a5f9-43cfda9ca27a",
-                "6308fd4a-de63-4da6-90b7-48d69d64bde2",
-                "7730596e-5172-40f2-951f-3d89fb4c6b60",
-                "7a860147-28a5-40c2-a3c8-ee21e3760905",
-                "824963a9-c9e8-4b77-aed0-946700a17b4e",
-                "9d3b263a-45ec-4fde-b94e-2fd5aed5de51",
-                "b029fe70-ab2f-4381-9b68-559ffb08c3f9",
-                "b9e475d3-3f55-4891-a29d-b975158590eb",
-                "bc770897-51e6-4731-b0ce-2d19bfca1ee4",
-                "ccb9e096-cbfb-4fee-bea1-ce8a42e7477e",
-                "013851d7-7b40-4c53-a671-90610c745f75",
-                "0431fed1-5d25-4a66-8a79-1b58d3778d54",
-                "0f62afe8-4786-46ff-a44b-c8b049eb4503",
-                "135aea8d-36a7-4dd2-a0e1-9de865641744",
-                "1d453c67-92a3-43d7-94f1-da6019fa344c",
-                "278f5200-6a66-4302-84e1-b0af136aa51a",
-                "31975fbb-efb3-47ae-8bab-147563490a0f",
-                "34385d40-a076-4a41-96ee-b23cc29dcfd0",
-                "3b1b5408-1de8-479e-ad75-f898e30d7489",
-                "5b5ac7ff-7945-462d-8978-13f2bf38d323",
-                "5b9d05c7-c6c4-4737-a5f9-43cfda9ca27a",
-                "6308fd4a-de63-4da6-90b7-48d69d64bde2",
-                "7730596e-5172-40f2-951f-3d89fb4c6b60",
-                "7a860147-28a5-40c2-a3c8-ee21e3760905",
-                "824963a9-c9e8-4b77-aed0-946700a17b4e",
-                "9d3b263a-45ec-4fde-b94e-2fd5aed5de51",
-                "b029fe70-ab2f-4381-9b68-559ffb08c3f9",
-                "b9e475d3-3f55-4891-a29d-b975158590eb",
-                "bc770897-51e6-4731-b0ce-2d19bfca1ee4",
-                "ccb9e096-cbfb-4fee-bea1-ce8a42e7477e",
+                "046d30bf-8fe3-49bd-b593-498092c0ac29",
+                "24b32ea2-ac37-4c36-8e73-480edbb46446",
+                "28e4e49e-c908-48ef-bdf5-220139db5db8",
+                "409e7802-0010-4d94-a009-983fe0769aaf",
+                "588d237d-9015-4294-83e0-1e88405b5c84",
+                "6e64f5a9-443a-4c1b-8eaa-e32154d826dc",
+                "72ee0713-3995-44e3-b9c4-24b1edeec2f9",
+                "80fc206d-6744-4d4b-9b45-845d759fe909",
+                "87d0db2e-8a9c-4a3a-8a87-a4017366fae8",
+                "8aff1cae-2ca3-4a67-a192-a4b66ea29e14",
+                "8b28f008-7ffb-4a16-943f-4458e72bf5aa",
+                "9271ec78-5968-447b-8a14-8a0dead26005",
+                "986669e1-b360-44b3-a1d6-1e8f89ef842e",
+                "99a0708d-6e76-42a1-86d4-a71f5eb70e6a",
+                "b72a6130-2d43-4e3c-8b49-a09d03afd22b",
+                "bb01591f-43fd-44e7-aa60-1ad5468e5e8c",
+                "cffacca3-c346-496a-9e35-d70279af36a6",
+                "f447d83b-83ad-4e57-b6dd-9c9d9e8d1cf7",
+                "fda4d584-c4a2-45c7-b4a3-d13a968a7a3f",
+                "fe170492-b08e-4e0c-a411-3b0f245d5f34"
             ];
 
             List<Car> carList =  [ ];
@@ -868,6 +797,7 @@ namespace MilestoneMotorsWebApp.Business
                     UserName = usernames,
                     Email = emails,
                     EmailConfirmed = true,
+                    ProfilePictureImageUrl = ""
                 };
 
                 var result = await userManager.CreateAsync(newAppUser, passwords);

@@ -1,25 +1,20 @@
-﻿using System.Text;
-using MilestoneMotorsWebApp.App.AppConfig;
+﻿using MilestoneMotorsWebApp.App.AppConfig;
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.Models;
-using MilestoneMotorsWebApp.App.ViewModels;
 using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Business.Utilities;
-using MilestoneMotorsWebApp.Domain.Entities;
-using Newtonsoft.Json;
 
 namespace MilestoneMotorsWebApp.App.Services
 {
     public class UserService(HttpClient httpClient) : BaseService(httpClient), IUserService
     {
-        public async Task<ResponseDTO> DeleteUser(string? id, string? token)
+        public async Task<bool> DeleteUser(string? id, string? token)
         {
             if (string.IsNullOrEmpty(id))
             {
-                return new ResponseDTO { IsSuccessful = false, StatusCode = 404 };
+                throw new InvalidDataException("Invalid id");
             }
 
-            return await SendAsync(
+            return await SendAsync<bool>(
                 new ApiRequest
                 {
                     Url = GetUri($"/delete/{id}"),
@@ -29,53 +24,55 @@ namespace MilestoneMotorsWebApp.App.Services
             );
         }
 
-        public async Task<ResponseDTO> GetProfilePicture(string? id, string? token)
+        public async Task<string> GetProfilePicture(string? id, string? token)
         {
-            return await SendAsync(
+            return await SendAsync<string>(
                 new ApiRequest { Url = GetUri($"/profilePicture/{id}"), AccessToken = token, }
             );
         }
 
-        public async Task<ResponseDTO> GetUserCars(string? id, string? token)
+        public async Task<List<CarDto>> GetUserCars(string? id, string? token)
         {
             if (string.IsNullOrEmpty(id))
             {
-                return new ResponseDTO { IsSuccessful = false, StatusCode = 404 };
+                throw new InvalidDataException("Invalid id");
             }
 
-            return await SendAsync(
+            return await SendAsync<List<CarDto>>(
                 new ApiRequest { Url = GetUri($"/userCars/{id}"), AccessToken = token, }
             );
         }
 
-        public async Task<ResponseDTO> GetUserDetail(string? id, string? token)
+        public async Task<UserDto> GetUserDetail(string? id, string? token)
         {
             if (string.IsNullOrEmpty(id))
             {
-                return new ResponseDTO { IsSuccessful = false, StatusCode = 404 };
+                throw new InvalidDataException("Invalid id");
             }
-            return await SendAsync(new ApiRequest { Url = GetUri($"/{id}"), AccessToken = token, });
+            return await SendAsync<UserDto>(
+                new ApiRequest { Url = GetUri($"/{id}"), AccessToken = token, }
+            );
         }
 
-        public async Task<ResponseDTO> GetUserEdit(string? id, string? token)
+        public async Task<EditUserDto> GetUserEdit(string? id, string? token)
         {
             if (string.IsNullOrEmpty(id))
             {
-                return new ResponseDTO { IsSuccessful = false, StatusCode = 404 };
+                throw new InvalidDataException("Invalid id");
             }
-            return await SendAsync(
+            return await SendAsync<EditUserDto>(
                 new ApiRequest { Url = GetUri($"/edit/{id}"), AccessToken = token, }
             );
         }
 
-        public async Task<ResponseDTO> PostUserEdit(EditUserDto dto, string? token)
+        public async Task<EditUserFeedbackDto> PostUserEdit(EditUserDto dto, string? token)
         {
-            return await SendAsync(
+            return await SendAsync<EditUserFeedbackDto>(
                 new ApiRequest
                 {
                     Url = GetUri("/edit"),
                     AccessToken = token,
-                    Data = new { EditUserDto = dto },
+                    Data = dto,
                     MethodType = StaticDetails.MethodType.PUT
                 }
             );

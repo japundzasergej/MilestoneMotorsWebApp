@@ -1,40 +1,33 @@
-﻿using System.Text;
-using System.Web;
+﻿using System.Web;
 using MilestoneMotorsWebApp.App.AppConfig;
-using MilestoneMotorsWebApp.App.Helpers;
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.Models;
-using MilestoneMotorsWebApp.App.ViewModels;
 using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Business.Utilities;
-using MilestoneMotorsWebApp.Domain.Entities;
-using Newtonsoft.Json;
-using X.PagedList;
 
 namespace MilestoneMotorsWebApp.App.Services
 {
     public class CarService(HttpClient httpClient) : BaseService(httpClient), ICarService
     {
-        public async Task<ResponseDTO> CreateCar(CreateCarDto carDto, string? token)
+        public async Task<ImageServiceDto> CreateCar(CreateCarDto carDto, string? token)
         {
-            return await SendAsync(
+            return await SendAsync<ImageServiceDto>(
                 new ApiRequest
                 {
                     Url = GetUri("/create"),
                     AccessToken = token,
-                    Data = new { CreateCarDto = carDto },
+                    Data = carDto,
                     MethodType = StaticDetails.MethodType.POST
                 }
             );
         }
 
-        public async Task<ResponseDTO> DeleteCar(int? id, string? token)
+        public async Task<bool> DeleteCar(int? id, string? token)
         {
             if (id == null || id == 0)
             {
-                return new ResponseDTO { IsSuccessful = false, StatusCode = 404 };
+                throw new InvalidDataException("Invalid id");
             }
-            return await SendAsync(
+            return await SendAsync<bool>(
                 new ApiRequest
                 {
                     Url = GetUri($"/delete/{id}"),
@@ -44,13 +37,12 @@ namespace MilestoneMotorsWebApp.App.Services
             );
         }
 
-        public async Task<ResponseDTO> GetAllCars(
+        public async Task<List<CarDto>> GetAllCars(
             string search,
             string orderBy,
             string fuelType,
             string condition,
-            string brand,
-            int? page
+            string brand
         )
         {
             var builder = new UriBuilder();
@@ -62,41 +54,39 @@ namespace MilestoneMotorsWebApp.App.Services
             query["brand"] = brand;
             builder.Query = query.ToString();
 
-            return await SendAsync(new ApiRequest { Url = GetUri(builder.Query.ToString()) });
+            return await SendAsync<List<CarDto>>(
+                new ApiRequest { Url = GetUri(builder.Query.ToString()) }
+            );
         }
 
-        public async Task<ResponseDTO> GetCarDetail(int? id, string? token)
+        public async Task<CarDto> GetCarDetail(int? id)
         {
             if (id == null || id == 0)
             {
-                return new ResponseDTO { IsSuccessful = false, StatusCode = 404 };
+                throw new InvalidDataException("Invalid id");
             }
-            return await SendAsync(new ApiRequest { Url = GetUri($"/{id}"), AccessToken = token });
+            return await SendAsync<CarDto>(new ApiRequest { Url = GetUri($"/{id}") });
         }
 
-        public async Task<ResponseDTO> GetEditCar(int? id, string? token)
+        public async Task<EditCarDto> GetEditCar(int? id, string? token)
         {
             if (id == null || id == 0)
             {
-                return new ResponseDTO { IsSuccessful = false, StatusCode = 404 };
+                throw new InvalidDataException("Invalid id");
             }
-            return await SendAsync(
+            return await SendAsync<EditCarDto>(
                 new ApiRequest { Url = GetUri($"/edit/{id}"), AccessToken = token, }
             );
         }
 
-        public async Task<ResponseDTO> PostEditCar(int? id, EditCarDto dto, string? token)
+        public async Task<bool> PostEditCar(EditCarDto dto, string? token)
         {
-            if (id == null || id == 0)
-            {
-                return new ResponseDTO { IsSuccessful = false, StatusCode = 404 };
-            }
-            return await SendAsync(
+            return await SendAsync<bool>(
                 new ApiRequest
                 {
                     Url = GetUri("/edit"),
                     AccessToken = token,
-                    Data = new { EditCarDto = dto },
+                    Data = dto,
                     MethodType = StaticDetails.MethodType.PUT
                 }
             );
