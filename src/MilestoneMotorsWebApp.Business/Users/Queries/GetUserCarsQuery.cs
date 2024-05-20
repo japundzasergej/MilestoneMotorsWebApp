@@ -7,6 +7,6 @@ namespace MilestoneMotorsWebApp.Business.Users.Queries
     public class GetUserCarsQuery : IRequest<IEnumerable<CarDto>>
     {
         [FromRoute]
-        public string Id { get; set; }
+        public string Id { get; init; }
     }
 }

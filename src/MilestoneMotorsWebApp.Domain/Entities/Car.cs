@@ -7,7 +7,7 @@ namespace MilestoneMotorsWebApp.Domain.Entities
     public record Car
     {
         [Key]
-        public int Id { get; set; }
+        public int Id { get; init; }
         public Condition Condition { get; init; }
         public Brand Brand { get; init; }
         public string Description { get; init; }

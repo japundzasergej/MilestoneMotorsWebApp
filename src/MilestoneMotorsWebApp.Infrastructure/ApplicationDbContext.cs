@@ -7,7 +7,7 @@ namespace MilestoneMotorsWebApp.Infrastructure
 {
     public class ApplicationDbContext(DbContextOptions options) : IdentityDbContext<User>(options)
     {
-        public DbSet<Car> Cars { get; set; }
+        public DbSet<Car> Cars { get; init; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

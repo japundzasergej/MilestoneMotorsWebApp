@@ -11,7 +11,7 @@ namespace MilestoneMotorsWebApp.Business.DTO
 
         public string Description { get; init; }
 
-        public double Price { get; set; }
+        public double Price { get; init; }
 
         public string Model { get; init; }
 
