@@ -1,13 +1,16 @@
-﻿using MilestoneMotorsWebApp.Domain.Entities;
+﻿using MilestoneMotorsWebApp.Business.DTO;
 
 namespace MilestoneMotorsWebApp.App.ViewModels
 {
-    public class UserAccountViewModel
+    public record UserAccountViewModel
     {
-        public string? ProfilePictureImageUrl { get; set; }
-        public string? Country { get; set; }
-        public string? City { get; set; }
-        public string? State { get; set; }
-        public ICollection<Car> MyListings { get; set; }
+        public string Id { get; init; }
+        public string UserName { get; init; }
+        public string Email { get; init; }
+        public string? ProfilePictureImageUrl { get; init; }
+        public string? Country { get; init; }
+        public string? City { get; init; }
+        public string? State { get; init; }
+        public List<CarDto> MyListings { get; init; }
     }
 }

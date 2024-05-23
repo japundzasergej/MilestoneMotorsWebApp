@@ -1,115 +1,72 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using MilestoneMotorsWebApp.App.Attributes;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using MilestoneMotorsWebApp.App.Controllers;
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.ViewModels;
+using MilestoneMotorsWebApp.Business.DTO;
 
 namespace MilestoneMotorsWeb.Controllers
 {
-    public class UserController(IUserService userService)
-        : BaseController<IUserService>(userService)
+    public class UserController(IUserService userService, IMapper mapper) : BaseController
     {
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> Detail(string? id)
         {
-            var result = await _service.GetUserDetail(id);
-            if (result == null)
-            {
-                return NotFound();
-            }
-            return View(result);
+            var response = await userService.GetUserDetail(id, GetToken());
+
+            return View(mapper.Map<UserAccountViewModel>(response));
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> EditPage(string? id)
         {
-            var result = await _service.GetUserEdit(id);
+            var response = await userService.GetUserEdit(id, GetToken());
 
-            if (result == null)
-            {
-                return NotFound();
-            }
-
-            return View(result);
+            return View(mapper.Map<EditUserViewModel>(response));
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         public async Task<IActionResult> EditPage(EditUserViewModel editVM)
         {
             if (ModelState.IsValid)
             {
-                var userId = GetUserId();
-                var editUserFeedback = await _service.PostUserEdit(userId, editVM);
+                var editDto = mapper.Map<EditUserDto>(editVM);
+                editDto.Id = GetUserId();
+                editDto.ImageContentType = editVM.ProfilePictureImageUrl?.ContentType ?? "";
+                var response = await userService.PostUserEdit(editDto, GetToken());
 
-                if (editUserFeedback == null)
+                if (response.IsImageServiceDown)
                 {
-                    TempData["Error"] = "Something went wrong, please try again.";
-                    return RedirectToAction("Detail", "User", new { id = userId });
+                    TempData["Error"] = "Image service is currently down, please try again later.";
                 }
-
-                if (editUserFeedback.IsImageServiceDown)
-                {
-                    TempData["Error"] = "Image upload service is down.";
-                }
-
-                if (!editUserFeedback.IsAuthorized)
-                {
-                    return Unauthorized();
-                }
-
-                if (!editUserFeedback.HasFailed)
-                {
-                    TempData["Success"] = "Successfully updated profile.";
-                    return RedirectToAction("Detail", "User", new { id = userId });
-                }
-                else
-                {
-                    TempData["Error"] = "Something went wrong, please try again.";
-                    return RedirectToAction("Detail", "User", new { id = userId });
-                }
+                TempData["Success"] = "Successfully updated profile.";
+                return RedirectToAction("Detail", "User", new { id = GetUserId() });
             }
             return View(editVM);
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> MyListings()
         {
-            var userId = GetUserId();
-            var result = await _service.GetUserCars(userId);
+            var response = await userService.GetUserCars(GetUserId(), GetToken());
 
-            if (result == null)
-            {
-                return NotFound();
-            }
-
-            return View(result);
+            return View(new GetUserCarsViewModel { Cars = response });
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         [Route("User/DeleteUser")]
         public async Task<IActionResult> DeleteUser()
         {
-            var userId = GetUserId();
-            var response = await _service.DeleteUser(userId);
+            var response = await userService.DeleteUser(GetUserId(), GetToken());
 
-            if (response == null)
+            if (!response)
             {
-                return NotFound();
+                TempData["Error"] =
+                    "Something went wrong while deleting your account, please try again later.";
+                return RedirectToAction("Detail", "User", new { id = GetUserId() });
             }
-
-            if (response.IsSuccessStatusCode)
+            else
             {
                 HttpContext.Session.Remove("JwtToken");
                 TempData["Success"] = "Account successfully deleted.";
                 return RedirectToAction("Index", "Home");
-            }
-            else
-            {
-                TempData["Error"] =
-                    "Something went wrong while deleting your account, please try again later.";
-                return RedirectToAction("Detail", "User", new { userId });
             }
         }
     }

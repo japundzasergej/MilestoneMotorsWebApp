@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using MilestoneMotorsWebApp.Business.DTO;
 using MilestoneMotorsWebApp.Business.Interfaces;
@@ -14,25 +15,23 @@ namespace MilestoneMotorsWebApp.Business.Users.Commands
         UserManager<User> userManager
     ) : IRequestHandler<EditUserCommand, EditUserFeedbackDto>
     {
-        private readonly IUserRepository _userRepository = userRepository;
-        private readonly IPhotoService _photoService = photoService;
-        private readonly UserManager<User> _userManager = userManager;
-
         public async Task<EditUserFeedbackDto> Handle(
             EditUserCommand request,
             CancellationToken cancellationToken
         )
         {
             var editDto = request.EditUserDto;
-            var id = editDto.Id;
             var contentType = editDto.ImageContentType ?? "";
-            var user = await _userRepository.GetByIdAsync(id);
+
+            var user =
+                await userRepository.GetByIdAsync(editDto.Id)
+                ?? throw new InvalidDataException("Object doesn't exist");
             var editFeedbackDto = new EditUserFeedbackDto();
 
             if (editDto.ProfilePictureImageUrl != null && editDto.ProfilePictureImageUrl.Length > 0)
             {
                 var photoResult = (string?)
-                    await _photoService.CloudinaryUpload(
+                    await photoService.CloudinaryUpload(
                         editDto.ProfilePictureImageUrl,
                         contentType
                     );
@@ -44,7 +43,7 @@ namespace MilestoneMotorsWebApp.Business.Users.Commands
 
                 if (!string.IsNullOrEmpty(user.ProfilePictureImageUrl))
                 {
-                    _ = _photoService.DeletePhotoAsync(user.ProfilePictureImageUrl);
+                    _ = photoService.DeletePhotoAsync(user.ProfilePictureImageUrl);
                 }
 
                 user.ProfilePictureImageUrl = photoResult ?? user.ProfilePictureImageUrl;
@@ -52,15 +51,14 @@ namespace MilestoneMotorsWebApp.Business.Users.Commands
                 user.State = editDto?.State?.FirstCharToUpper().Trim() ?? string.Empty;
                 user.Country = editDto?.Country?.FirstCharToUpper().Trim() ?? string.Empty;
 
-                var result = await _userManager.UpdateAsync(user);
+                var result = await userManager.UpdateAsync(user);
                 if (result.Succeeded)
                 {
                     return editFeedbackDto;
                 }
                 else
                 {
-                    editFeedbackDto.HasFailed = true;
-                    return editFeedbackDto;
+                    throw new BadHttpRequestException("Invalid request format.");
                 }
             }
             else
@@ -69,7 +67,7 @@ namespace MilestoneMotorsWebApp.Business.Users.Commands
                 user.State = editDto?.State?.FirstCharToUpper().Trim() ?? string.Empty;
                 user.Country = editDto?.Country?.FirstCharToUpper().Trim() ?? string.Empty;
 
-                var result = await _userManager.UpdateAsync(user);
+                var result = await userManager.UpdateAsync(user);
 
                 if (result.Succeeded)
                 {
@@ -77,8 +75,7 @@ namespace MilestoneMotorsWebApp.Business.Users.Commands
                 }
                 else
                 {
-                    editFeedbackDto.HasFailed = true;
-                    return editFeedbackDto;
+                    throw new BadHttpRequestException("Invalid request format.");
                 }
             }
         }

@@ -1,10 +1,19 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using MilestoneMotorsWebApp.Business;
+using MilestoneMotorsWebApp.Business.Helpers;
+using MilestoneMotorsWebApp.Business.Interfaces;
+using MilestoneMotorsWebApp.Business.Mapper;
+using MilestoneMotorsWebApp.Business.Services;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure;
+using MilestoneMotorsWebApp.Infrastructure.Interfaces;
+using MilestoneMotorsWebApp.Infrastructure.Repositories;
+using MilestoneMotorsWebApp.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 var url = builder.Configuration["JwtSettings:Audience"];
+var connectionString = builder.Configuration.GetConnectionString("DbConnect");
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -12,9 +21,31 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddApiInjection(builder.Configuration);
+builder
+    .Services
+    .AddAutoMapper(typeof(CarMapperProfile).Assembly, typeof(UserMapperProfile).Assembly);
+builder.Services.AddSingleton<IPhotoService, PhotoService>();
+builder
+    .Services
+    .Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+
+builder.Services.AddMediatrInjection();
+builder.Services.AddTransient<GlobalExceptionHandler>();
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICarsRepository, CarsRepository>();
+
+builder
+    .Services
+    .AddDbContext<ApplicationDbContext>(
+        options =>
+            options.UseSqlServer(
+                connectionString,
+                b => b.MigrationsAssembly("MilestoneMotorsWebApp.WebApi")
+            )
+    );
 builder.Services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
-builder.Services.AddAuthInjection(builder.Configuration);
+builder.Services.AddTransient<JwtMiddleware>();
 builder
     .Services
     .AddCors(options =>
@@ -50,8 +81,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseMiddleware<GlobalExceptionHandler>();
+
+app.UseMiddleware<JwtMiddleware>();
 
 app.MapControllers();
 

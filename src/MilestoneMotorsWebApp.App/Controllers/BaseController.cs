@@ -2,11 +2,8 @@
 
 namespace MilestoneMotorsWebApp.App.Controllers
 {
-    public class BaseController<TService>(TService service) : Controller
-        where TService : class
+    public class BaseController : Controller
     {
-        protected readonly TService _service = service;
-
         protected string GetUserId()
         {
             var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
@@ -17,6 +14,11 @@ namespace MilestoneMotorsWebApp.App.Controllers
                 as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
 
             return jsonToken?.Claims.FirstOrDefault(claim => claim.Type == "nameid")?.Value ?? "";
+        }
+
+        protected string GetToken()
+        {
+            return HttpContext.Session.GetString("JwtToken") ?? "";
         }
     }
 }

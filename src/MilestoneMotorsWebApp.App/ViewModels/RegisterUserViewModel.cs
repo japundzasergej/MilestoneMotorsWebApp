@@ -3,14 +3,14 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MilestoneMotorsWebApp.App.ViewModels
 {
-    public class RegisterUserViewModel
+    public record RegisterUserViewModel
     {
         [Required]
-        public string Username { get; set; }
+        public string Username { get; init; }
 
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public string Email { get; init; }
 
         [Required]
         [DataType(DataType.Password)]
@@ -23,12 +23,12 @@ namespace MilestoneMotorsWebApp.App.ViewModels
             @"^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()\-__+.]).{8,}$",
             ErrorMessage = "Password must have at least one uppercase letter, one digit, one special character."
         )]
-        public string Password { get; set; }
+        public string Password { get; init; }
 
         [Required]
         [DataType(DataType.Password)]
         [DisplayName("Confirm Password")]
         [Compare("Password", ErrorMessage = "Password must match.")]
-        public string ConfirmPassword { get; set; }
+        public string ConfirmPassword { get; init; }
     }
 }

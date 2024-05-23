@@ -15,9 +15,6 @@ namespace MilestoneMotorsWebApp.Business.Accounts.Commands
         IConfiguration configuration
     ) : IRequestHandler<LoginUserCommand, LoginUserFeedbackDto>
     {
-        private readonly UserManager<User> _userManager = userManager;
-        private readonly IConfiguration _configuration = configuration;
-
         public async Task<LoginUserFeedbackDto> Handle(
             LoginUserCommand request,
             CancellationToken cancellationToken
@@ -25,14 +22,15 @@ namespace MilestoneMotorsWebApp.Business.Accounts.Commands
         {
             var loginDto = request.LoginUserDto;
             var loginFeedbackDto = new LoginUserFeedbackDto();
-            var user = await _userManager.FindByEmailAsync(loginDto.Email);
+
+            var user = await userManager.FindByEmailAsync(loginDto.Email);
             if (user != null)
             {
-                var passwordCheck = await _userManager.CheckPasswordAsync(user, loginDto.Password);
+                var passwordCheck = await userManager.CheckPasswordAsync(user, loginDto.Password);
                 if (passwordCheck)
                 {
                     var tokenHandler = new JwtSecurityTokenHandler();
-                    var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:Key"]);
+                    var key = Encoding.UTF8.GetBytes(configuration["JwtSettings:Key"]);
 
                     var tokenDescriptor = new SecurityTokenDescriptor
                     {
@@ -41,18 +39,17 @@ namespace MilestoneMotorsWebApp.Business.Accounts.Commands
                             {
                                 new(
                                     JwtRegisteredClaimNames.Iss,
-                                    _configuration["JwtSettings:Issuer"]
+                                    configuration["JwtSettings:Issuer"]
                                 ),
                                 new(
                                     JwtRegisteredClaimNames.Aud,
-                                    _configuration["JwtSettings:Audience"]
+                                    configuration["JwtSettings:Audience"]
                                 ),
                                 new(ClaimTypes.Name, user.UserName),
                                 new(ClaimTypes.NameIdentifier, user.Id),
-                                new(ClaimTypes.GivenName, user.ProfilePictureImageUrl),
                             }
                         ),
-                        Expires = DateTime.UtcNow.AddDays(1),
+                        Expires = DateTime.UtcNow.AddMinutes(120),
                         SigningCredentials = new SigningCredentials(
                             new SymmetricSecurityKey(key),
                             SecurityAlgorithms.HmacSha256Signature
@@ -68,9 +65,11 @@ namespace MilestoneMotorsWebApp.Business.Accounts.Commands
                     return loginFeedbackDto;
                 }
             }
-
-            loginFeedbackDto.IsValidUser = false;
-            return loginFeedbackDto;
+            else
+            {
+                loginFeedbackDto.IsValidUser = false;
+                return loginFeedbackDto;
+            }
         }
     }
 }

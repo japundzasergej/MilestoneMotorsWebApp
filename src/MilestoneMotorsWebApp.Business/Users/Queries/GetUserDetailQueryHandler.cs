@@ -1,31 +1,28 @@
-﻿using MediatR;
-using MilestoneMotorsWebApp.Domain.Entities;
+﻿using AutoMapper;
+using MediatR;
+using MilestoneMotorsWebApp.Business.DTO;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
 
 namespace MilestoneMotorsWebApp.Business.Users.Queries
 {
-    public class GetUserDetailQueryHandler(IUserRepository userRepository)
-        : IRequestHandler<GetUserDetailQuery, User?>
+    public class GetUserDetailQueryHandler(IUserRepository userRepository, IMapper mapper)
+        : IRequestHandler<GetUserDetailQuery, UserDto>
     {
-        private readonly IUserRepository _userRepository = userRepository;
-
-        public async Task<User?> Handle(
+        public async Task<UserDto> Handle(
             GetUserDetailQuery request,
             CancellationToken cancellationToken
         )
         {
-            var id = request.Id;
+            if (string.IsNullOrWhiteSpace(request.Id))
+            {
+                throw new InvalidDataException("Object doesn't exist");
+            }
 
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                return null;
-            }
-            var userPage = await _userRepository.GetByIdAsync(id);
-            if (userPage == null)
-            {
-                return null;
-            }
-            return userPage;
+            var userPage =
+                await userRepository.GetByIdAsync(request.Id)
+                ?? throw new InvalidDataException("Object doesn't exist");
+
+            return mapper.Map<UserDto>(userPage);
         }
     }
 }

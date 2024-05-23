@@ -1,9 +1,9 @@
 ﻿namespace MilestoneMotorsWebApp.Business.DTO
 {
-    public class LoginUserDto
+    public record LoginUserDto
     {
-        public string Email { get; set; }
+        public string Email { get; init; }
 
-        public string Password { get; set; }
+        public string Password { get; init; }
     }
 }
