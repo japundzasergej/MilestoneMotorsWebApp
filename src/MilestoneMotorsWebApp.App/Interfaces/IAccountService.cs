@@ -1,11 +1,10 @@
-﻿using MilestoneMotorsWebApp.App.ViewModels;
-using MilestoneMotorsWebApp.Business.DTO;
+﻿using MilestoneMotorsWebApp.Business.DTO;
 
 namespace MilestoneMotorsWebApp.App.Interfaces
 {
     public interface IAccountService
     {
-        Task<RegisterUserFeedbackDto?> RegisterUser(RegisterUserViewModel registerVM);
-        Task<LoginUserFeedbackDto?> LoginUser(LoginUserViewModel loginVM);
+        Task<RegisterUserFeedbackDto> RegisterUser(RegisterUserDto dto);
+        Task<LoginUserFeedbackDto> LoginUser(LoginUserDto dto);
     }
 }

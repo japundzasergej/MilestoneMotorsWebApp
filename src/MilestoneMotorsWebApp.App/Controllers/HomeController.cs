@@ -1,15 +1,20 @@
 using System.Diagnostics;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Controllers;
+using MilestoneMotorsWebApp.App.Helpers;
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.ViewModels;
+using MilestoneMotorsWebApp.Business.DTO;
 using MilestoneMotorsWebApp.Domain.Entities;
+using X.PagedList;
 
 namespace MilestoneMotorsWeb.Controllers
 {
-    public class HomeController(ICarService service) : BaseController<ICarService>(service)
+    public class HomeController(ICarService carService, IMapper mapper) : BaseController
     {
+        [AllowAnonymous]
         public async Task<IActionResult> Index(
             string search,
             string orderBy,
@@ -21,162 +26,145 @@ namespace MilestoneMotorsWeb.Controllers
         {
             ViewBag.Search = search;
             ViewBag.OrderBy = orderBy;
-            ViewBag.FuelTypeFilter = fuelType;
-            ViewBag.BodyTypeFilter = condition;
-            ViewBag.BrandFilter = brand;
+            ViewBag.FuelType = fuelType;
+            ViewBag.Condition = condition;
+            ViewBag.Brand = brand;
             ViewBag.Page = page;
 
-            var result = await _service.GetAllCars(
-                search,
-                orderBy,
-                fuelType,
-                condition,
-                brand,
-                page
-            );
+            var response = await carService.GetAllCars(search, orderBy, fuelType, condition, brand);
 
-            if (result == null)
-            {
-                return NotFound();
-            }
+            int pageSize = 6;
+            int pageNumber = page ?? 1;
 
-            return View(result);
+            return View(new GetCarsViewModel { Cars = response.ToPagedList(pageNumber, pageSize) });
         }
 
+        [AllowAnonymous]
         public async Task<IActionResult> Detail(int? id)
         {
-            var result = await _service.GetCarDetail(id);
+            var response = await carService.GetCarDetail(id);
 
-            if (result == null)
-            {
-                return NotFound();
-            }
-
-            return View(result);
+            return View(mapper.Map<GetCarViewModel>(response));
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public IActionResult Create()
         {
-            var userId = GetUserId();
-            var carVM = new CreateCarViewModel { UserId = userId };
-            return View(carVM);
+            return View(new CreateCarViewModel { UserId = GetUserId() });
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         public async Task<IActionResult> Create(CreateCarViewModel carVM)
         {
             if (ModelState.IsValid)
             {
-                object onImageServiceDown() =>
-                    TempData["Error"] = "Image service is currently down.";
-                object onDbNotSuccessful() =>
-                    TempData["Error"] = "Something went wrong, please try again.";
+                var carDto = mapper.Map<CreateCarViewModel, CreateCarDto>(carVM);
+                List<IFormFile> files =
+                [
+                    carVM.HeadlinerImageUrl,
+                    carVM.PhotoOne,
+                    carVM.PhotoTwo,
+                    carVM.PhotoThree,
+                    carVM.PhotoFour,
+                    carVM.PhotoFive
+                ];
+                var imageContentTypes = PhotoHelpers.GetImageContentType(files);
+                carDto.CreatedAt = DateTime.UtcNow;
+                carDto.ImageContentTypes = imageContentTypes;
+                carDto.UserId = GetUserId();
 
-                var result = await _service.CreateCar(carVM, onImageServiceDown, onDbNotSuccessful);
+                var response = await carService.CreateCar(carDto, GetToken());
 
-                if (result == null)
+                if (response.ImageServiceDown)
                 {
-                    onDbNotSuccessful();
-                    return View(carVM);
+                    TempData["Error"] =
+                        "Image upload service is currently down, please try again later.";
                 }
-
                 TempData["Success"] = "Listing created successfully!";
-                return RedirectToAction("Index");
+                return RedirectToAction(nameof(Index));
             }
+            TempData["Error"] = "Something went wrong, please try again";
             return View(carVM);
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public async Task<IActionResult> Edit(int? id)
         {
-            var result = await _service.GetEditCar(id);
+            var response = await carService.GetEditCar(id, GetToken());
 
-            if (result == null)
-            {
-                TempData["Error"] = "Something went wrong, please try again.";
-                return View("Index");
-            }
-
-            return View(result);
+            return View(mapper.Map<EditCarViewModel>(response));
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         public async Task<IActionResult> Edit(int? id, EditCarViewModel editCarVM)
         {
+            if (id == null || id == 0)
+            {
+                throw new InvalidOperationException("Id cannot be null or less than 1");
+            }
+
             if (ModelState.IsValid)
             {
-                var result = await _service.PostEditCar(id, editCarVM);
+                var carDto = mapper.Map<EditCarDto>(editCarVM);
+                carDto.Id = (int)id;
+                carDto.UserId = GetUserId();
+                var response = await carService.PostEditCar(carDto, GetToken());
 
-                if (result == null)
-                {
-                    return NotFound();
-                }
-
-                if (result == true)
-                {
-                    TempData["Success"] = "Listing updated successfully!";
-                    return RedirectToAction("Index");
-                }
-                else
+                if (!response)
                 {
                     TempData["Error"] = "Something went wrong, please try again.";
                     return View(editCarVM);
                 }
+                TempData["Success"] = "Listing updated successfully!";
+                return RedirectToAction(nameof(Index));
             }
+
             return View(editCarVM);
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpPost]
         public async Task<IActionResult> Delete(int? id)
         {
-            var result = await _service.DeleteCar(id);
-            if (result == null)
+            var response = await carService.DeleteCar(id, GetToken());
+
+            if (!response)
             {
-                return NotFound();
+                TempData["Error"] = "Something went wrong, please try again.";
+                return RedirectToAction(nameof(Index));
             }
 
-            if (result == true)
-            {
-                TempData["Success"] = "Listing deleted successfully!";
-                return RedirectToAction("Index");
-            }
-            else
-            {
-                TempData["Error"] = "Something went wrong, please try again";
-                return RedirectToAction("Index");
-            }
+            TempData["Success"] = "Listing successfully deleted.";
+            return RedirectToAction(nameof(Index));
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         public IActionResult SendMessage()
         {
             TempData["Success"] = "Message sent successfully!";
             return Ok();
         }
 
+        [AllowAnonymous]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error(int statuscode)
         {
-            if (statuscode == 404)
+            if (statuscode == 400)
             {
-                return View("NotFound");
-            }
-            else if (statuscode == 401)
-            {
-                return View("Unauthorized");
+                TempData["Error"] = "Invalid request format.";
+                return View(nameof(Index));
             }
             else
             {
-                return View(
-                    new ErrorViewModel
-                    {
-                        RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
-                    }
-                );
+                return statuscode switch
+                {
+                    404 => View("NotFound"),
+                    401 => View("Unauthorized"),
+                    500 => View("InternalServerError"),
+                    _
+                        => View(
+                            new ErrorViewModel
+                            {
+                                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+                            }
+                        )
+                };
             }
         }
     }

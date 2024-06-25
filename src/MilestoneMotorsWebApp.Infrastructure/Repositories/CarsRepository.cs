@@ -1,28 +1,35 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
+using MilestoneMotorsWebApp.Business.Cars.Helpers;
 using MilestoneMotorsWebApp.Domain.Entities;
+using MilestoneMotorsWebApp.Domain.Enums;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
 
 namespace MilestoneMotorsWebApp.Infrastructure.Repositories
 {
     public class CarsRepository(ApplicationDbContext db) : ICarsRepository
     {
-        private readonly ApplicationDbContext _db = db;
-
         public async Task<bool> Add(Car car)
         {
-            _db.Add(car);
+            db.Add(car);
             return await Save();
         }
 
         public async Task<bool> Remove(Car car)
         {
-            _db.Remove(car);
+            db.Remove(car);
             return await Save();
         }
 
-        public async Task<IEnumerable<Car>> GetAllCarsAsync()
+        public async Task<IEnumerable<Car>> GetAllCarsAsync(string? orderBy)
         {
-            return await _db.Cars.ToListAsync();
+            var carQuery = db.Cars.AsQueryable();
+
+            if (!string.IsNullOrEmpty(orderBy))
+            {
+                carQuery = OrderCars.Filter(carQuery, orderBy);
+            }
+            return await carQuery.ToListAsync();
         }
 
         public async Task<Car?> GetCarByIdAsync(int? id)
@@ -31,7 +38,7 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
             {
                 return null;
             }
-            var carDetail = await _db.Cars.SingleOrDefaultAsync(c => c.Id == id);
+            var carDetail = await db.Cars.SingleOrDefaultAsync(c => c.Id == id);
             if (carDetail == null)
             {
                 return null;
@@ -41,13 +48,13 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
 
         public async Task<bool> Save()
         {
-            var result = await _db.SaveChangesAsync();
+            var result = await db.SaveChangesAsync();
             return result > 0;
         }
 
         public async Task<bool> Update(Car car)
         {
-            _db.Update(car);
+            db.Update(car);
             return await Save();
         }
 
@@ -57,12 +64,72 @@ namespace MilestoneMotorsWebApp.Infrastructure.Repositories
             {
                 return null;
             }
-            var userCar = await _db.Cars.AsNoTracking().SingleOrDefaultAsync(c => c.Id == id);
+            var userCar = await db.Cars.AsNoTracking().SingleOrDefaultAsync(c => c.Id == id);
             if (userCar == null)
             {
                 return null;
             }
             return userCar;
+        }
+
+        public async Task<IEnumerable<Car>> SearchCarsAsync(string search, string? orderBy)
+        {
+            string query = "SELECT * FROM Cars WHERE Brand LIKE {0} OR Model LIKE {0}";
+            var carsQuery = db.Cars.FromSqlRaw(query, $"{search}%");
+
+            if (!string.IsNullOrEmpty(orderBy))
+            {
+                carsQuery = OrderCars.Filter(carsQuery, orderBy);
+            }
+
+            var carList = await carsQuery.ToListAsync();
+
+            if (carList.Count == 0)
+            {
+                return [ ];
+            }
+
+            return carList;
+        }
+
+        public async Task<IEnumerable<Car>> FilteredCarsAsync(
+            string? brand,
+            string? fuelType,
+            string? condition,
+            string? orderBy
+        )
+        {
+            var carsQuery = db.Cars.AsQueryable();
+
+            if (brand != null)
+            {
+                var selectedBrand = Enum.Parse<Brand>(brand);
+                carsQuery = carsQuery.Where(c => c.Brand == selectedBrand);
+            }
+            else if (fuelType != null)
+            {
+                var selectedFuelType = Enum.Parse<FuelTypes>(fuelType);
+                carsQuery = carsQuery.Where(c => c.FuelTypes == selectedFuelType);
+            }
+            else if (condition != null)
+            {
+                var selectedCondition = Enum.Parse<Condition>(condition);
+                carsQuery = carsQuery.Where(c => c.Condition == selectedCondition);
+            }
+
+            if (!string.IsNullOrEmpty(orderBy))
+            {
+                carsQuery = OrderCars.Filter(carsQuery, orderBy);
+            }
+
+            var carList = await carsQuery.ToListAsync();
+
+            if (carList.Count == 0)
+            {
+                return [ ];
+            }
+
+            return carList;
         }
     }
 }

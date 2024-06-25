@@ -1,12 +1,12 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using MilestoneMotorsWebApp.Domain.Entities;
+using MilestoneMotorsWebApp.Business.DTO;
 
 namespace MilestoneMotorsWebApp.Business.Users.Queries
 {
-    public class GetUserDetailQuery : IRequest<User?>
+    public class GetUserDetailQuery : IRequest<UserDto>
     {
         [FromRoute]
-        public string Id { get; set; }
+        public string Id { get; init; }
     }
 }

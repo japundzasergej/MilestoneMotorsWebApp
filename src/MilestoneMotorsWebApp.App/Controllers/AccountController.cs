@@ -1,61 +1,60 @@
 ﻿using System.Text;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MilestoneMotorsWebApp.App.Attributes;
 using MilestoneMotorsWebApp.App.Controllers;
 using MilestoneMotorsWebApp.App.Interfaces;
 using MilestoneMotorsWebApp.App.ViewModels;
+using MilestoneMotorsWebApp.Business.DTO;
 
 namespace MilestoneMotorsWeb.Controllers
 {
-    public class AccountController(IAccountService accountService)
-        : BaseController<IAccountService>(accountService)
+    public class AccountController(IAccountService accountService, IMapper mapper) : BaseController
     {
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult Register()
         {
             var isAuthenticated = !string.IsNullOrEmpty(HttpContext.Session.GetString("JwtToken"));
+
             if (isAuthenticated)
             {
                 return RedirectToAction("Index", "Home");
             }
-            var registerVM = new RegisterUserViewModel();
-            return View(registerVM);
+            return View(new RegisterUserViewModel());
         }
 
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> Register(RegisterUserViewModel registerVM)
         {
             if (ModelState.IsValid)
             {
-                var registerFeedbackDto = await _service.RegisterUser(registerVM);
+                var response = await accountService.RegisterUser(
+                    mapper.Map<RegisterUserDto>(registerVM)
+                );
 
-                if (registerFeedbackDto == null)
-                {
-                    TempData["Error"] = "Something went wrong, please try again later.";
-                    return View(registerVM);
-                }
-
-                if (registerFeedbackDto.UserExists)
+                if (response.UserExists)
                 {
                     TempData["Error"] = "User already exists with that username.";
                     return View(registerVM);
                 }
 
-                if (registerFeedbackDto.ResponseFailed)
+                if (response.ResponseFailed)
                 {
-                    foreach (var error in registerFeedbackDto.ErrorList)
+                    foreach (var error in response.ErrorList)
                     {
                         TempData["Error"] = error.Description;
                         return View(registerVM);
                     }
                 }
-
                 TempData["Success"] = "Account successfully created!";
                 return RedirectToAction("Login", "Account");
             }
             return View(registerVM);
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult Login()
         {
@@ -64,10 +63,10 @@ namespace MilestoneMotorsWeb.Controllers
             {
                 return RedirectToAction("Index", "Home");
             }
-            var loginVM = new LoginUserViewModel();
-            return View(loginVM);
+            return View(new LoginUserViewModel());
         }
 
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> Login(LoginUserViewModel loginVM)
         {
@@ -78,27 +77,21 @@ namespace MilestoneMotorsWeb.Controllers
             }
             if (ModelState.IsValid)
             {
-                var loginFeedbackDto = await _service.LoginUser(loginVM);
+                var response = await accountService.LoginUser(mapper.Map<LoginUserDto>(loginVM));
 
-                if (loginFeedbackDto == null)
-                {
-                    TempData["Error"] = "Something went wrong, please try again later.";
-                    return View(loginVM);
-                }
-
-                if (!loginFeedbackDto.IsValidUser)
+                if (!response.IsValidUser)
                 {
                     TempData["Error"] = "No user registered with that email.";
                     return View(loginVM);
                 }
 
-                if (loginFeedbackDto.IsNotPasswordsMatching)
+                if (response.IsNotPasswordsMatching)
                 {
                     TempData["Error"] = "Invalid password.";
                     return View(loginVM);
                 }
 
-                HttpContext.Session.SetString("JwtToken", loginFeedbackDto.Token);
+                HttpContext.Session.SetString("JwtToken", response.Token);
 
                 TempData["Success"] = "Login successful!";
                 return RedirectToAction("Index", "Home");
@@ -106,7 +99,6 @@ namespace MilestoneMotorsWeb.Controllers
             return View(loginVM);
         }
 
-        [ServiceFilter(typeof(JwtSessionAuthenticationAttribute))]
         [HttpGet]
         public async Task<IActionResult> Logout()
         {

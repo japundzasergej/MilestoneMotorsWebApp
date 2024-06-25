@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MilestoneMotorsWebApp.Business.Accounts.Commands;
 using MilestoneMotorsWebApp.Business.DTO;
@@ -7,20 +8,24 @@ namespace MilestoneMotorsWebApp.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AccountController(IMediator mediator) : BaseController(mediator)
+    public class AccountController(IMediator mediator) : Controller
     {
+        [AllowAnonymous]
         [HttpPost]
         [Route("login")]
-        public async Task<LoginUserFeedbackDto> Login([FromBody] LoginUserCommand command)
+        public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
         {
-            return await _mediator.Send(command);
+            var response = await mediator.Send(new LoginUserCommand { LoginUserDto = dto });
+            return Ok(response);
         }
 
+        [AllowAnonymous]
         [HttpPost]
         [Route("register")]
-        public async Task<RegisterUserFeedbackDto> Register([FromBody] RegisterUserCommand command)
+        public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
         {
-            return await _mediator.Send(command);
+            var response = await mediator.Send(new RegisterUserCommand { RegisterUserDto = dto });
+            return Ok(response);
         }
     }
 }

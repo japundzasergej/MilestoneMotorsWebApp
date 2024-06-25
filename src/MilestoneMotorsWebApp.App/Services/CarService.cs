@@ -1,102 +1,48 @@
-﻿using System.Text;
-using System.Web;
-using MilestoneMotorsWebApp.App.Helpers;
+﻿using System.Web;
+using MilestoneMotorsWebApp.App.AppConfig;
 using MilestoneMotorsWebApp.App.Interfaces;
-using MilestoneMotorsWebApp.App.ViewModels;
+using MilestoneMotorsWebApp.App.Models;
 using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Business.Utilities;
-using MilestoneMotorsWebApp.Domain.Entities;
-using Newtonsoft.Json;
-using X.PagedList;
 
 namespace MilestoneMotorsWebApp.App.Services
 {
-    public class CarService(HttpClient httpClient, IMvcMapperService mapperService) : ICarService
+    public class CarService(HttpClient httpClient) : BaseService(httpClient), ICarService
     {
-        private readonly HttpClient _httpClient = httpClient;
-        private readonly IMvcMapperService _mapperService = mapperService;
-
-        public async Task<ImageServiceDto?> CreateCar(
-            CreateCarViewModel carVM,
-            Func<object> onImageServiceDown,
-            Func<object> onDbNotSuccessful
-        )
+        public async Task<ImageServiceDto> CreateCar(CreateCarDto carDto, string? token)
         {
-            var carDto = _mapperService.Map<CreateCarViewModel, CreateCarDto>(carVM);
-            List<IFormFile> files =
-            [
-                carVM.HeadlinerImageUrl,
-                carVM.PhotoOne,
-                carVM.PhotoTwo,
-                carVM.PhotoThree,
-                carVM.PhotoFour,
-                carVM.PhotoFive
-            ];
-            var imageContentTypes = PhotoHelpers.GetImageContentType(files);
-            carDto.ImageContentTypes = imageContentTypes;
-
-            var apiUrl = _httpClient.BaseAddress.ExtendPath("/create");
-
-            var payload = new { CreateCarDto = carDto };
-
-            var jsonCarDto = new StringContent(
-                JsonConvert.SerializeObject(payload),
-                Encoding.UTF8,
-                "application/json"
+            return await SendAsync<ImageServiceDto>(
+                new ApiRequest
+                {
+                    Url = GetUri("/create"),
+                    AccessToken = token,
+                    Data = carDto,
+                    MethodType = StaticDetails.MethodType.POST
+                }
             );
-
-            var response = await _httpClient.PostAsync(apiUrl, jsonCarDto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                string responseBody = await response.Content.ReadAsStringAsync();
-                var imageServiceDto = JsonConvert.DeserializeObject<ImageServiceDto>(responseBody);
-
-                if (imageServiceDto.ImageServiceDown)
-                {
-                    onImageServiceDown();
-                }
-
-                if (!imageServiceDto.DbSuccessful)
-                {
-                    onDbNotSuccessful();
-                }
-
-                return imageServiceDto;
-            }
-            else
-            {
-                return null;
-            }
         }
 
-        public async Task<bool?> DeleteCar(int? id)
+        public async Task<bool> DeleteCar(int? id, string? token)
         {
             if (id == null || id == 0)
             {
-                return null;
+                throw new InvalidDataException("Invalid id");
             }
-
-            var apiUrl = _httpClient.BaseAddress.ExtendPath($"/delete/{id}");
-
-            var response = await _httpClient.PostAsync(apiUrl, new StringContent(string.Empty));
-            if (response.IsSuccessStatusCode)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return await SendAsync<bool>(
+                new ApiRequest
+                {
+                    Url = GetUri($"/delete/{id}"),
+                    AccessToken = token,
+                    MethodType = StaticDetails.MethodType.DELETE
+                }
+            );
         }
 
-        public async Task<IPagedList<Car>?> GetAllCars(
+        public async Task<List<CarDto>> GetAllCars(
             string search,
             string orderBy,
             string fuelType,
             string condition,
-            string brand,
-            int? page
+            string brand
         )
         {
             var builder = new UriBuilder();
@@ -108,99 +54,42 @@ namespace MilestoneMotorsWebApp.App.Services
             query["brand"] = brand;
             builder.Query = query.ToString();
 
-            var apiUrl = _httpClient.BaseAddress.ExtendPath(builder.Query.ToString());
-
-            var response = await _httpClient.GetAsync(apiUrl);
-
-            if (response.IsSuccessStatusCode)
-            {
-                string responseBody = await response.Content.ReadAsStringAsync();
-                var searchedList = JsonConvert.DeserializeObject<List<Car>>(responseBody);
-                int pageSize = 6;
-                int pageNumber = page ?? 1;
-                return searchedList.ToPagedList(pageNumber, pageSize);
-            }
-            else
-            {
-                return null;
-            }
+            return await SendAsync<List<CarDto>>(
+                new ApiRequest { Url = GetUri(builder.Query.ToString()) }
+            );
         }
 
-        public async Task<Car?> GetCarDetail(int? id)
-        {
-            var apiUrl = _httpClient.BaseAddress.ExtendPath($"/{id}");
-            var response = await _httpClient.GetAsync(apiUrl);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var responseBody = await response.Content.ReadAsStringAsync();
-                var carDetail = JsonConvert.DeserializeObject<Car>(responseBody);
-
-                if (carDetail == null)
-                {
-                    return null;
-                }
-
-                return carDetail;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public async Task<EditCarViewModel?> GetEditCar(int? id)
-        {
-            var apiUrl = _httpClient.BaseAddress.ExtendPath($"/edit/{id}");
-
-            var response = await _httpClient.GetAsync(apiUrl);
-
-            if (response.IsSuccessStatusCode)
-            {
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                var carDto = JsonConvert.DeserializeObject<EditCarDto>(responseBody);
-                if (!carDto.IsSuccessful)
-                {
-                    return null;
-                }
-                var carVM = _mapperService.Map<EditCarDto, EditCarViewModel>(carDto);
-                return carVM;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public async Task<bool?> PostEditCar(int? id, EditCarViewModel editCarVM)
+        public async Task<CarDto> GetCarDetail(int? id)
         {
             if (id == null || id == 0)
             {
-                return null;
+                throw new InvalidDataException("Invalid id");
             }
+            return await SendAsync<CarDto>(new ApiRequest { Url = GetUri($"/{id}") });
+        }
 
-            var carDto = _mapperService.Map<EditCarViewModel, EditCarDto>(editCarVM);
-            carDto.Id = (int)id;
-
-            var apiUrl = _httpClient.BaseAddress.ExtendPath("/edit");
-            var payload = new { EditCarDto = carDto };
-
-            var jsonCarDto = new StringContent(
-                JsonConvert.SerializeObject(payload),
-                Encoding.UTF8,
-                "application/json"
+        public async Task<EditCarDto> GetEditCar(int? id, string? token)
+        {
+            if (id == null || id == 0)
+            {
+                throw new InvalidDataException("Invalid id");
+            }
+            return await SendAsync<EditCarDto>(
+                new ApiRequest { Url = GetUri($"/edit/{id}"), AccessToken = token, }
             );
-            var response = await _httpClient.PostAsync(apiUrl, jsonCarDto);
+        }
 
-            if (response.IsSuccessStatusCode)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+        public async Task<bool> PostEditCar(EditCarDto dto, string? token)
+        {
+            return await SendAsync<bool>(
+                new ApiRequest
+                {
+                    Url = GetUri("/edit"),
+                    AccessToken = token,
+                    Data = dto,
+                    MethodType = StaticDetails.MethodType.PUT
+                }
+            );
         }
     }
 }

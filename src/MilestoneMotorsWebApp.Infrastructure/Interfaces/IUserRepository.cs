@@ -10,5 +10,6 @@ namespace MilestoneMotorsWebApp.Infrastructure.Interfaces
         Task<User?> GetByIdAsync(string? id);
         Task<User?> GetByIdNoTrackAsync(string? id);
         Task<IEnumerable<Car>?> GetUserCarsAsync(string userId);
+        Task<string?> GetUserProfilePictureAsync(string userId);
     }
 }

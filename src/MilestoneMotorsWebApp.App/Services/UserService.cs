@@ -1,134 +1,81 @@
-﻿using System.Text;
+﻿using MilestoneMotorsWebApp.App.AppConfig;
 using MilestoneMotorsWebApp.App.Interfaces;
-using MilestoneMotorsWebApp.App.ViewModels;
+using MilestoneMotorsWebApp.App.Models;
 using MilestoneMotorsWebApp.Business.DTO;
-using MilestoneMotorsWebApp.Business.Utilities;
-using MilestoneMotorsWebApp.Domain.Entities;
-using Newtonsoft.Json;
 
 namespace MilestoneMotorsWebApp.App.Services
 {
-    public class UserService(HttpClient httpClient, IMvcMapperService mapperService) : IUserService
+    public class UserService(HttpClient httpClient) : BaseService(httpClient), IUserService
     {
-        private readonly HttpClient _httpClient = httpClient;
-        private readonly IMvcMapperService _mapperService = mapperService;
-
-        public async Task<HttpResponseMessage?> DeleteUser(string? id)
+        public async Task<bool> DeleteUser(string? id, string? token)
         {
-            if (id == null)
+            if (string.IsNullOrEmpty(id))
             {
-                return null;
-            }
-            ;
-
-            var apiUrl = _httpClient.BaseAddress.ExtendPath($"/delete/{id}");
-
-            return await _httpClient.PostAsync(apiUrl, new StringContent(string.Empty));
-        }
-
-        public async Task<IEnumerable<Car>?> GetUserCars(string? id)
-        {
-            if (id == null)
-            {
-                return null;
+                throw new InvalidDataException("Invalid id");
             }
 
-            var apiUrl = _httpClient.BaseAddress.ExtendPath($"/userCars/{id}");
-
-            var response = await _httpClient.GetAsync(apiUrl);
-            if (response.IsSuccessStatusCode)
-            {
-                string responseBody = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<List<Car>>(responseBody);
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public async Task<User?> GetUserDetail(string? id)
-        {
-            var apiUrl = _httpClient.BaseAddress.ExtendPath($"/{id}");
-            var result = await _httpClient.GetAsync(apiUrl);
-
-            if (result.IsSuccessStatusCode)
-            {
-                string responseBody = await result.Content.ReadAsStringAsync();
-                var userPage = JsonConvert.DeserializeObject<User>(responseBody);
-
-                if (userPage == null)
+            return await SendAsync<bool>(
+                new ApiRequest
                 {
-                    return null;
+                    Url = GetUri($"/delete/{id}"),
+                    AccessToken = token,
+                    MethodType = StaticDetails.MethodType.DELETE
                 }
-
-                return userPage;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public async Task<EditUserViewModel?> GetUserEdit(string? id)
-        {
-            var apiUrl = _httpClient.BaseAddress.ExtendPath($"/edit/{id}");
-
-            var response = await _httpClient.GetAsync(apiUrl);
-
-            if (response.IsSuccessStatusCode)
-            {
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                var userDto = JsonConvert.DeserializeObject<EditUserDto>(responseBody);
-
-                if (userDto == null)
-                {
-                    return null;
-                }
-
-                return _mapperService.Map<EditUserDto, EditUserViewModel>(userDto);
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public async Task<EditUserFeedbackDto?> PostUserEdit(string? id, EditUserViewModel editVM)
-        {
-            var apiUrl = _httpClient.BaseAddress.ExtendPath("/edit");
-
-            var editDto = _mapperService.Map<EditUserViewModel, EditUserDto>(editVM);
-            editDto.Id = id ?? "";
-            editDto.ImageContentType = editVM?.ProfilePictureImageUrl?.ContentType ?? "";
-
-            var payload = new { EditUserDto = editDto };
-
-            var jsonEditDto = new StringContent(
-                JsonConvert.SerializeObject(payload),
-                Encoding.UTF8,
-                "application/json"
             );
-            var response = await _httpClient.PostAsync(apiUrl, jsonEditDto);
+        }
 
-            if (response.IsSuccessStatusCode)
+        public async Task<string> GetProfilePicture(string? id, string? token)
+        {
+            return await SendAsync<string>(
+                new ApiRequest { Url = GetUri($"/profilePicture/{id}"), AccessToken = token, }
+            );
+        }
+
+        public async Task<List<CarDto>> GetUserCars(string? id, string? token)
+        {
+            if (string.IsNullOrEmpty(id))
             {
-                string responseBody = await response.Content.ReadAsStringAsync();
-                var editUserFeedback = JsonConvert.DeserializeObject<EditUserFeedbackDto>(
-                    responseBody
-                );
+                throw new InvalidDataException("Invalid id");
+            }
 
-                if (string.IsNullOrEmpty(id))
+            return await SendAsync<List<CarDto>>(
+                new ApiRequest { Url = GetUri($"/userCars/{id}"), AccessToken = token, }
+            );
+        }
+
+        public async Task<UserDto> GetUserDetail(string? id, string? token)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                throw new InvalidDataException("Invalid id");
+            }
+            return await SendAsync<UserDto>(
+                new ApiRequest { Url = GetUri($"/{id}"), AccessToken = token, }
+            );
+        }
+
+        public async Task<EditUserDto> GetUserEdit(string? id, string? token)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                throw new InvalidDataException("Invalid id");
+            }
+            return await SendAsync<EditUserDto>(
+                new ApiRequest { Url = GetUri($"/edit/{id}"), AccessToken = token, }
+            );
+        }
+
+        public async Task<EditUserFeedbackDto> PostUserEdit(EditUserDto dto, string? token)
+        {
+            return await SendAsync<EditUserFeedbackDto>(
+                new ApiRequest
                 {
-                    editUserFeedback.IsAuthorized = false;
+                    Url = GetUri("/edit"),
+                    AccessToken = token,
+                    Data = dto,
+                    MethodType = StaticDetails.MethodType.PUT
                 }
-                return editUserFeedback;
-            }
-            else
-            {
-                return null;
-            }
+            );
         }
     }
 }

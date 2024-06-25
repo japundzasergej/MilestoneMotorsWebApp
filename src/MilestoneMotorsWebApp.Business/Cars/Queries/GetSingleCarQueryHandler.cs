@@ -1,32 +1,23 @@
-﻿using MediatR;
-using MilestoneMotorsWebApp.Domain.Entities;
+﻿using AutoMapper;
+using MediatR;
+using MilestoneMotorsWebApp.Business.DTO;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
 
 namespace MilestoneMotorsWebApp.Business.Cars.Queries
 {
-    public class GetSingleCarQueryHandler(ICarsRepository carsRepository)
-        : IRequestHandler<GetSingleCarQuery, Car?>
+    public class GetSingleCarQueryHandler(ICarsRepository carsRepository, IMapper mapper)
+        : IRequestHandler<GetSingleCarQuery, CarDto>
     {
-        private readonly ICarsRepository _carsRepository = carsRepository;
-
-        public async Task<Car?> Handle(
+        public async Task<CarDto> Handle(
             GetSingleCarQuery request,
             CancellationToken cancellationToken
         )
         {
-            var id = request.Id;
-            if (id == 0)
-            {
-                return null;
-            }
+            var carDetail =
+                await carsRepository.GetCarByIdAsync(request.Id)
+                ?? throw new InvalidDataException("Object doesn't exist");
 
-            var carDetail = await _carsRepository.GetCarByIdAsync(id);
-
-            if (carDetail == null)
-            {
-                return null;
-            }
-            return carDetail;
+            return mapper.Map<CarDto>(carDetail);
         }
     }
 }

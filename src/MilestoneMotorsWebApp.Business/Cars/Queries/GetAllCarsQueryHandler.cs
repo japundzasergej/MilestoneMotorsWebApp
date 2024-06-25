@@ -1,16 +1,15 @@
-﻿using MediatR;
-using MilestoneMotorsWebApp.Business.Cars.Helpers;
+﻿using AutoMapper;
+using MediatR;
+using MilestoneMotorsWebApp.Business.DTO;
 using MilestoneMotorsWebApp.Domain.Entities;
 using MilestoneMotorsWebApp.Infrastructure.Interfaces;
 
 namespace MilestoneMotorsWebApp.Business.Cars.Queries
 {
-    public class GetAllCarsQueryHandler(ICarsRepository carsRepository)
-        : IRequestHandler<GetAllCarsQuery, List<Car>>
+    public class GetAllCarsQueryHandler(ICarsRepository carsRepository, IMapper mapper)
+        : IRequestHandler<GetAllCarsQuery, IEnumerable<CarDto>>
     {
-        private readonly ICarsRepository _carsRepository = carsRepository;
-
-        public async Task<List<Car>> Handle(
+        public async Task<IEnumerable<CarDto>> Handle(
             GetAllCarsQuery request,
             CancellationToken cancellationToken
         )
@@ -18,31 +17,39 @@ namespace MilestoneMotorsWebApp.Business.Cars.Queries
             var search = request.Search;
             var orderBy = request.OrderBy;
             var fuelType = request.FuelType;
-            var brand = request.Brand;
             var condition = request.Condition;
+            var brand = request.Brand;
 
-            var carsList = await _carsRepository.GetAllCarsAsync();
-
-            var searchedList = carsList
-                .Where(
-                    c =>
-                        string.IsNullOrWhiteSpace(search)
-                        || c.Brand.ToString().StartsWith(search, StringComparison.OrdinalIgnoreCase)
-                        || c.Model.StartsWith(search, StringComparison.OrdinalIgnoreCase)
-                )
-                .ToList();
-
-            searchedList = CarFilters.ApplyOrdering(searchedList, orderBy);
-            searchedList = CarFilters.ApplyFuelTypeFilter(searchedList, fuelType);
-            searchedList = CarFilters.ApplyBrandFilter(searchedList, brand);
-            searchedList = CarFilters.ApplyConditionFilter(searchedList, condition);
-
-            if (searchedList.Count == 0)
+            if (!string.IsNullOrEmpty(search))
             {
-                return [ ];
-            }
+                var searchedList = await carsRepository.SearchCarsAsync(search, orderBy);
+                var carList = searchedList.Select(mapper.Map<Car, CarDto>);
 
-            return searchedList;
+                return carList;
+            }
+            else if (
+                !string.IsNullOrEmpty(condition)
+                || !string.IsNullOrEmpty(fuelType)
+                || !string.IsNullOrEmpty(brand)
+            )
+            {
+                var filteredList = await carsRepository.FilteredCarsAsync(
+                    brand,
+                    fuelType,
+                    condition,
+                    orderBy
+                );
+                var carList = filteredList.Select(mapper.Map<Car, CarDto>);
+
+                return carList;
+            }
+            else
+            {
+                var completeList = await carsRepository.GetAllCarsAsync(orderBy);
+                var carList = completeList.Select(mapper.Map<Car, CarDto>);
+
+                return carList;
+            }
         }
     }
 }

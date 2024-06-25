@@ -7,6 +7,6 @@ namespace MilestoneMotorsWebApp.Business.Accounts.Commands
     public class LoginUserCommand : IRequest<LoginUserFeedbackDto>
     {
         [FromBody]
-        public LoginUserDto LoginUserDto { get; set; }
+        public LoginUserDto LoginUserDto { get; init; }
     }
 }

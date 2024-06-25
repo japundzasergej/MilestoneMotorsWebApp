@@ -1,5 +1,6 @@
 ﻿@using System.Security.Claims
 @inject IHttpContextAccessor contextAccessor
+@inject MilestoneMotorsWebApp.App.Interfaces.IUserService userService
 
 @{
     var isAuthenticated = !string.IsNullOrEmpty(contextAccessor.HttpContext.Session.GetString("JwtToken"));
@@ -18,7 +19,15 @@
 
             userId = jsonToken.Claims.FirstOrDefault(claim => claim.Type == "nameid")?.Value;
             userName = jsonToken.Claims.FirstOrDefault(claim => claim.Type == "unique_name")?.Value;
-            profilePictureUrl = jsonToken.Claims.FirstOrDefault(claim => claim.Type == "given_name")?.Value;
+
+            var response = await userService.GetProfilePicture(userId, jwtToken);
+
+            if(response != null)
+            {
+                profilePictureUrl = response;
+            }
+
+            
         }
     }
 

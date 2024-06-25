@@ -7,6 +7,6 @@ namespace MilestoneMotorsWebApp.Business.Accounts.Commands
     public class RegisterUserCommand : IRequest<RegisterUserFeedbackDto>
     {
         [FromBody]
-        public RegisterUserDto RegisterUserDto { get; set; }
+        public RegisterUserDto RegisterUserDto { get; init; }
     }
 }

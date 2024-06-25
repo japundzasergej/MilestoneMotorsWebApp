@@ -1,15 +1,14 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
-using MilestoneMotorsWebApp.Business.Accounts.Commands;
 using MilestoneMotorsWebApp.Business.DTO;
 using MilestoneMotorsWebApp.Domain.Constants;
 using MilestoneMotorsWebApp.Domain.Entities;
 
+namespace MilestoneMotorsWebApp.Business.Accounts.Commands;
+
 public class RegisterUserCommandHandler(UserManager<User> userManager)
     : IRequestHandler<RegisterUserCommand, RegisterUserFeedbackDto>
 {
-    private readonly UserManager<User> _userManager = userManager;
-
     public async Task<RegisterUserFeedbackDto> Handle(
         RegisterUserCommand request,
         CancellationToken cancellationToken
@@ -17,7 +16,8 @@ public class RegisterUserCommandHandler(UserManager<User> userManager)
     {
         var registerDto = request.RegisterUserDto;
         var registerFeedbackDto = new RegisterUserFeedbackDto();
-        var user = await _userManager.FindByEmailAsync(registerDto.Email);
+
+        var user = await userManager.FindByEmailAsync(registerDto.Email);
 
         if (user != null)
         {
@@ -27,12 +27,13 @@ public class RegisterUserCommandHandler(UserManager<User> userManager)
         var newUser = new User
         {
             Email = registerDto.Email.Trim(),
-            UserName = registerDto.Username.Trim()
+            UserName = registerDto.Username.Trim(),
+            ProfilePictureImageUrl = "",
         };
-        var response = await _userManager.CreateAsync(newUser, registerDto.Password);
+        var response = await userManager.CreateAsync(newUser, registerDto.Password);
         if (response.Succeeded)
         {
-            await _userManager.AddToRoleAsync(newUser, UserRoles.User);
+            await userManager.AddToRoleAsync(newUser, UserRoles.User);
             return registerFeedbackDto;
         }
         else

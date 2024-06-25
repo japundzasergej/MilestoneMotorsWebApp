@@ -1,6 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @inject IHttpContextAccessor contextAccessor
-@model Car
+@model MilestoneMotorsWebApp.App.ViewModels.GetCarViewModel
 @{
     string title;
     string concatTitle = string.Concat(Model.Brand, " ", Model.Model);
@@ -12,6 +12,9 @@
     {
         title = concatTitle.Substring(0, 16) + " ...";
     }
+    var firstPart = Model.EnginePower.Substring(0, 3);
+    var lastPart = Model.EnginePower.Substring(3);
+    var enginePower = $"{firstPart}/{lastPart}";
     ViewData["Title"] = title;
 }
 @{
@@ -179,7 +182,7 @@
                                 </tr>
                                 <tr>
                                     <td>Engine Power</td>
-                                    <td>@Model.EnginePower</td>
+                                    <td>@enginePower</td>
                                 </tr>
                                 <tr>
                                     <td>Fixed Price</td>
