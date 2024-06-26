@@ -19,7 +19,7 @@ Milestone Motors is a web application designed to simulate the management and op
 ## Demo Video
 
 
-You can check out the demo video for Milestone Motors on [YouTube](https://www.youtube.com/watch?v=VDCm99BLzrY).
+You can check out the demo video for Milestone Motors on [YouTube](https://www.youtube.com/watch?v=VDCm99BLzrY). (I can pull up the site on localhost upon reviewer's request as hosting the site externally free of charge proved quite a challenge.)
 
 
  
